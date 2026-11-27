@@ -143,8 +143,9 @@ class ResultFilter {
     if (skip != 'beds' && beds.isNotEmpty && !beds.contains(bedsOption(h))) return false;
     if (skip != 'price' && (minPrice != null || maxPrice != null)) {
       final p = h.price;
-      if (p == null || (minPrice != null && p < minPrice!) || (maxPrice != null && p > maxPrice!))
+      if (p == null || (minPrice != null && p < minPrice!) || (maxPrice != null && p > maxPrice!)) {
         return false;
+      }
     }
     if (skip != 'furnishing' && furnishing.isNotEmpty && !furnishing.contains(furnishingOf(h))) return false;
     if (skip != 'features' && features.isNotEmpty) {
