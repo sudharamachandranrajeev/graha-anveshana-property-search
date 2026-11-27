@@ -15,7 +15,9 @@ import 'research.dart';
   if (m != null) return (before: m.group(1)!, place: m.group(2)!.trim());
   // A lone word or two with no number is likely a place ("Leed", "LS6").
   final t = text.trim();
-  if (t.length >= 2 && t.split(RegExp(r'\s+')).length <= 3 && !RegExp(r'\b\d+\s*bed|£|\bunder\b').hasMatch(t)) {
+  if (t.length >= 2 &&
+      t.split(RegExp(r'\s+')).length <= 3 &&
+      !RegExp(r'\b\d+\s*bed|£|\bunder\b').hasMatch(t)) {
     return (before: '', place: t);
   }
   return null;
@@ -33,7 +35,11 @@ List<String> pastMatches(String text, Iterable<String> past, {int max = 4}) {
 
 /// Places starting with [typed]: towns and villages ("Leeds, West
 /// Yorkshire"), or postcodes when it looks like one.
-Future<List<({String name, String label})>> placesStarting(http.Client client, String typed, {int max = 6}) async {
+Future<List<({String name, String label})>> placesStarting(
+  http.Client client,
+  String typed, {
+  int max = 6,
+}) async {
   final q = typed.trim();
   if (q.length < 2) return const [];
   final postcode = RegExp(r'^[A-Za-z]{1,2}\d').hasMatch(q);

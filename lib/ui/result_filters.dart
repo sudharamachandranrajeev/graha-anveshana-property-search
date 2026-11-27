@@ -40,7 +40,8 @@ class ResultFilterPanel extends StatelessWidget {
         Row(
           children: [
             Expanded(child: Text('Filters', style: t.titleMedium)),
-            if (!f.isEmpty) TextButton(onPressed: () => onChanged(const ResultFilter()), child: const Text('Clear all')),
+            if (!f.isEmpty)
+              TextButton(onPressed: () => onChanged(const ResultFilter()), child: const Text('Clear all')),
           ],
         ),
         _Section<HomeType?>(
@@ -85,7 +86,9 @@ class ResultFilterPanel extends StatelessWidget {
         ),
         _Section<String>(
           title: 'Site',
-          options: [for (final o in facets.sites) (value: o.value, label: siteLabel(o.value), count: o.count)],
+          options: [
+            for (final o in facets.sites) (value: o.value, label: siteLabel(o.value), count: o.count),
+          ],
           ticked: f.sites.contains,
           onTap: (v) => onChanged(f.copyWith(sites: flip(f.sites, v))),
         ),
@@ -201,17 +204,12 @@ class _PriceSectionState extends State<_PriceSection> {
               onTap: () => w.onChanged(b.min, b.max),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text(
-                  switch (b) {
-                    (min: null, max: final m?) => 'Up to ${gbp(m)}',
-                    (min: final a?, max: null) => '${gbp(a)} and above',
-                    (min: final a?, max: final m?) => '${gbp(a)} to ${gbp(m)}',
-                    _ => '',
-                  },
-                  style: TextStyle(
-                    fontWeight: w.min == b.min && w.max == b.max ? FontWeight.w600 : null,
-                  ),
-                ),
+                child: Text(switch (b) {
+                  (min: null, max: final m?) => 'Up to ${gbp(m)}',
+                  (min: final a?, max: null) => '${gbp(a)} and above',
+                  (min: final a?, max: final m?) => '${gbp(a)} to ${gbp(m)}',
+                  _ => '',
+                }, style: TextStyle(fontWeight: w.min == b.min && w.max == b.max ? FontWeight.w600 : null)),
               ),
             ),
         ],

@@ -232,18 +232,26 @@ class PropertyBook {
   /// read empty keeps the one kept before.
   Future<void> applyAdvert(String id, AdvertDetails d, String today) => editProperty(id, (p) {
     final meta = (jsonDecode(p.meta) as Map).cast<String, Object?>();
-    final seen = Listing(source: p.source, sourceId: p.sourceId ?? '', url: p.url, address: p.address, price: d.price);
+    final seen = Listing(
+      source: p.source,
+      sourceId: p.sourceId ?? '',
+      url: p.url,
+      address: p.address,
+      price: d.price,
+    );
     return p.copyWith(
       price: Value(d.price ?? p.price),
       listingStatus: d.status.isEmpty ? p.listingStatus : d.status,
       imageUrl: Value(d.photos.firstOrNull ?? p.imageUrl),
-      meta: jsonEncode({
-        ...d.status == 'withdrawn' ? meta : withSeen(meta, seen, today),
-        // "Last seen in Search" stays Search's.
-        'seen': meta['seen'],
-        if (!d.isEmpty) 'advert': d.toJson(),
-        'advertRead': today,
-      }..removeWhere((k, v) => k == 'seen' && v == null)),
+      meta: jsonEncode(
+        {
+          ...d.status == 'withdrawn' ? meta : withSeen(meta, seen, today),
+          // "Last seen in Search" stays Search's.
+          'seen': meta['seen'],
+          if (!d.isEmpty) 'advert': d.toJson(),
+          'advertRead': today,
+        }..removeWhere((k, v) => k == 'seen' && v == null),
+      ),
     );
   });
 

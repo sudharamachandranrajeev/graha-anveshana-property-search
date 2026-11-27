@@ -61,10 +61,7 @@ void main() {
     // A section's counts leave its own ticks off, so the other types still
     // show what ticking them would add.
     final facets = Facets(homes, const ResultFilter(types: {HomeType.flat}, beds: {2}));
-    expect(
-      {for (final o in facets.types) o.value: o.count},
-      {HomeType.flat: 1, HomeType.terraced: 1},
-    );
+    expect({for (final o in facets.types) o.value: o.count}, {HomeType.flat: 1, HomeType.terraced: 1});
     expect({for (final o in facets.beds) o.value: o.count}, {1: 1, 2: 1});
     expect(const ResultFilter(types: {HomeType.flat}, beds: {2}).count, 2);
   });

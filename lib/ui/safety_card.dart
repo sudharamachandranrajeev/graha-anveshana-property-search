@@ -89,7 +89,10 @@ class _SafetyCardState extends ConsumerState<SafetyCard> {
             if (widget.rough)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
-                child: Text('This is for the middle of the postcode district, not the home itself.', style: t.bodySmall),
+                child: Text(
+                  'This is for the middle of the postcode district, not the home itself.',
+                  style: t.bodySmall,
+                ),
               ),
             for (final n in r.notes) Text(n, style: t.bodySmall),
             const Divider(height: 24),

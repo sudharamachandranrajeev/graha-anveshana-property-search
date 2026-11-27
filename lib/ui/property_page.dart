@@ -78,264 +78,264 @@ class PropertyPage extends ConsumerWidget {
     // Every word on the page can be selected and copied.
     return SelectionArea(
       child: PageScaffold(
-      title: p.address.split(',').first,
-      actions: [
-        IconButton(
-          tooltip: 'Copy details',
-          icon: const Icon(Icons.copy_all_outlined),
-          onPressed: () => copyText(
-            context,
-            homeSummary(
-              address: p.address,
-              price: p.price,
-              rent: kind == PropertyKind.rent,
-              facts: [if (propertyFacts(p).isNotEmpty) propertyFacts(p)],
-              agent: agent == null ? '' : contactName(agent),
-              phone: agent?.phone ?? '',
-              email: agent?.email ?? '',
-              url: p.url,
-              advert: saved.advert,
-            ),
-            what: 'Details copied.',
-          ),
-        ),
-        if (p.url.isNotEmpty)
+        title: p.address.split(',').first,
+        actions: [
           IconButton(
-            tooltip: 'See the advert',
-            icon: const Icon(Icons.open_in_new),
-            onPressed: () => openInApp(context, Uri.parse(p.url)),
+            tooltip: 'Copy details',
+            icon: const Icon(Icons.copy_all_outlined),
+            onPressed: () => copyText(
+              context,
+              homeSummary(
+                address: p.address,
+                price: p.price,
+                rent: kind == PropertyKind.rent,
+                facts: [if (propertyFacts(p).isNotEmpty) propertyFacts(p)],
+                agent: agent == null ? '' : contactName(agent),
+                phone: agent?.phone ?? '',
+                email: agent?.email ?? '',
+                url: p.url,
+                advert: saved.advert,
+              ),
+              what: 'Details copied.',
+            ),
           ),
-        IconButton(
-          tooltip: 'Edit',
-          icon: const Icon(Icons.edit_outlined),
-          onPressed: () => editProperty(context, ref, p: p),
-        ),
-        IconButton(
-          tooltip: 'Remove',
-          icon: const Icon(Icons.delete_outline),
-          onPressed: () => _remove(context, ref, p),
-        ),
-      ],
-      children: [
-        if (photos.isNotEmpty) PhotoGallery(photos),
-        const SizedBox(height: 16),
-        Eyebrow('${kind.label} · ${Stage.of(p.stage).label(kind)}'),
-        const SizedBox(height: 4),
-        CopyLine(p.address, what: 'address', style: t.headlineSmall),
-        const SizedBox(height: 12),
-        FigureCard(
-          eyebrow: kind == PropertyKind.rent ? 'Rent a month' : 'Price',
-          value: p.price == null ? '–' : gbp(p.price!),
-          caption: propertyFacts(p).isEmpty ? null : propertyFacts(p),
-          detail: dist == null ? null : '${km(dist)} from ${home!.label.isEmpty ? 'home' : home.label}',
-          accent: p.rating >= 4,
-        ),
-        Wrap(
-          spacing: 16,
-          runSpacing: 4,
-          children: [
-            if (p.availableFrom != null) Text('Available ${availableLabel(p.availableFrom!)}'),
-            if (p.listingStatus.isNotEmpty)
-              StatusLabel(
-                listingGone(p.listingStatus) ? Status.warning : Status.good,
-                listingStatusLabel(p.listingStatus),
-              ),
-            Text('Added ${niceDate(p.added)}'),
-            if (market.listedOn != null) Text('On the market since ${niceDate(market.listedOn!)}'),
-            if (market.sqft != null)
-              Text(
-                '${market.sqft} sq ft${p.price == null ? '' : ' · £${(p.price! / market.sqft!).toStringAsFixed(2)} a sq ft'}',
-              ),
-            if (market.seen != null) Text('Last seen in Search ${niceDate(market.seen!)}'),
-          ],
-        ),
-        if (market.prices.length > 1) ...[
-          const SizedBox(height: 8),
-          Text('Price history', style: t.titleSmall),
-          for (final pt in market.prices) Text('${niceDate(pt.at)}: ${gbp(pt.price)}', style: t.bodySmall),
+          if (p.url.isNotEmpty)
+            IconButton(
+              tooltip: 'See the advert',
+              icon: const Icon(Icons.open_in_new),
+              onPressed: () => openInApp(context, Uri.parse(p.url)),
+            ),
+          IconButton(
+            tooltip: 'Edit',
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => editProperty(context, ref, p: p),
+          ),
+          IconButton(
+            tooltip: 'Remove',
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () => _remove(context, ref, p),
+          ),
         ],
-        const SizedBox(height: 16),
-        ListingMap(
-          key: ValueKey('map-${p.id}'),
-          label: p.price == null ? 'Here' : gbp(p.price!),
-          lat: p.lat,
-          lon: p.lon,
-          postcode: p.postcode,
-          address: p.address,
-          anchors: anchorPlaces(ref),
-        ),
-        const SizedBox(height: 16),
-        SavedAdvertCard(p),
-        HomeRecordsCard(p),
-        SectionCard(
-          title: 'Stage',
-          hint: 'hunt.stage',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (photos.isNotEmpty) PhotoGallery(photos),
+          const SizedBox(height: 16),
+          Eyebrow('${kind.label} · ${Stage.of(p.stage).label(kind)}'),
+          const SizedBox(height: 4),
+          CopyLine(p.address, what: 'address', style: t.headlineSmall),
+          const SizedBox(height: 12),
+          FigureCard(
+            eyebrow: kind == PropertyKind.rent ? 'Rent a month' : 'Price',
+            value: p.price == null ? '–' : gbp(p.price!),
+            caption: propertyFacts(p).isEmpty ? null : propertyFacts(p),
+            detail: dist == null ? null : '${km(dist)} from ${home!.label.isEmpty ? 'home' : home.label}',
+            accent: p.rating >= 4,
+          ),
+          Wrap(
+            spacing: 16,
+            runSpacing: 4,
             children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final s in Stage.values)
-                    ChoiceChip(
-                      label: Text(s.label(kind)),
-                      selected: Stage.of(p.stage) == s,
-                      onSelected: (_) => ref.mutate((x) => x.book.setStage(p.id, s)),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Text('Rating'),
-                  for (var i = 1; i <= 5; i++)
-                    IconButton(
-                      tooltip: '$i of 5',
-                      icon: Icon(i <= p.rating ? Icons.star : Icons.star_border, color: lime),
-                      onPressed: () => ref.mutate(
-                        (x) => x.book.editProperty(p.id, (q) => q.copyWith(rating: i == p.rating ? 0 : i)),
-                      ),
-                    ),
-                ],
-              ),
+              if (p.availableFrom != null) Text('Available ${availableLabel(p.availableFrom!)}'),
+              if (p.listingStatus.isNotEmpty)
+                StatusLabel(
+                  listingGone(p.listingStatus) ? Status.warning : Status.good,
+                  listingStatusLabel(p.listingStatus),
+                ),
+              Text('Added ${niceDate(p.added)}'),
+              if (market.listedOn != null) Text('On the market since ${niceDate(market.listedOn!)}'),
+              if (market.sqft != null)
+                Text(
+                  '${market.sqft} sq ft${p.price == null ? '' : ' · £${(p.price! / market.sqft!).toStringAsFixed(2)} a sq ft'}',
+                ),
+              if (market.seen != null) Text('Last seen in Search ${niceDate(market.seen!)}'),
             ],
           ),
-        ),
-        const SizedBox(height: 12),
-        PriceCheckCard(p),
-        _ContactCard(p, agent),
-        const SizedBox(height: 12),
-        SectionCard(
-          title: 'Viewings',
-          trailing: Wrap(
-            children: [
-              TextButton.icon(
-                onPressed: () => _checklist(context, ref, p, kind),
-                icon: const Icon(Icons.checklist),
-                label: const Text('Checklist'),
-              ),
-              TextButton.icon(
-                onPressed: () => _bookViewing(context, ref, p),
-                icon: const Icon(Icons.event_available_outlined),
-                label: const Text('Book'),
-              ),
-            ],
-          ),
-          child: viewings.isEmpty
-              ? const Text('None booked.')
-              : Column(
-                  children: [
-                    for (final v in viewings)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(switch (v.status) {
-                          'done' => Icons.check_circle_outline,
-                          'cancelled' => Icons.cancel_outlined,
-                          _ => Icons.event_outlined,
-                        }),
-                        title: Text(niceDateTime(v.at)),
-                        subtitle: switch ([
-                          if (v.status == 'done') ?Impression.of(v.rating)?.label,
-                          if (v.notes.isNotEmpty) v.notes,
-                        ]) {
-                          [] => null,
-                          final lines => Text(lines.join(' · ')),
-                        },
-                        onTap: v.status == 'done' ? () => _viewingOutcome(context, ref, p, v) : null,
-                        trailing: PopupMenuButton<String>(
-                          tooltip: 'Viewing: done, cancelled or add to calendar',
-                          onSelected: (s) => switch (s) {
-                            'done' => _viewingOutcome(context, ref, p, v),
-                            'calendar' => addToCalendar(context, (viewing: v, home: p)),
-                            _ => ref.mutate((x) => x.book.save(x.db.viewings, v.copyWith(status: s), v.id)),
-                          },
-                          itemBuilder: (_) => [
-                            const PopupMenuItem(value: 'booked', child: Text('Booked')),
-                            const PopupMenuItem(value: 'done', child: Text('Done')),
-                            const PopupMenuItem(value: 'cancelled', child: Text('Cancelled')),
-                            if (v.status == 'booked') ...[
-                              const PopupMenuDivider(),
-                              const PopupMenuItem(value: 'calendar', child: Text('Add to calendar')),
-                            ],
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-        ),
-        const SizedBox(height: 12),
-        SectionCard(
-          title: 'Contact log',
-          trailing: TextButton.icon(
-            onPressed: () => logInteraction(context, ref, propertyId: p.id, contactId: p.agentId),
-            icon: const Icon(Icons.add_comment_outlined),
-            label: const Text('Add'),
-          ),
-          child: log.isEmpty
-              ? const Text('Nothing yet. Calls and messages started here are logged.')
-              : Column(
-                  children: [
-                    for (final i in log)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(channelIcons[i.channel] ?? Icons.chat_bubble_outline),
-                        title: Text(
-                          '${channelLabels[i.channel] ?? i.channel}${i.direction == 'in' ? ' from them' : ''} · ${niceDateTime(i.at)}',
-                        ),
-                        subtitle: Text(
-                          [
-                            i.summary,
-                            if (i.followUp != null) 'Follow up ${niceDate(i.followUp!)}',
-                          ].where((s) => s.isNotEmpty).join('\n'),
-                        ),
-                      ),
-                  ],
-                ),
-        ),
-        const SizedBox(height: 12),
-        SectionCard(
-          title: 'Notes',
-          trailing: IconButton(
-            tooltip: 'Edit notes',
-            icon: const Icon(Icons.edit_note),
-            onPressed: () => _editNotes(context, ref, p),
-          ),
-          child: Text(p.notes.isEmpty ? 'No notes.' : p.notes),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            if (p.postcode.isNotEmpty)
-              OutlinedButton.icon(
-                onPressed: () =>
-                    Navigator.of(context)
-                        .push(MaterialPageRoute(builder: (_) => ResearchPage(postcode: p.postcode))),
-                icon: const Icon(Icons.insights_outlined),
-                label: const Text('Area report'),
-              ),
-            if (kind == PropertyKind.rent)
-              OutlinedButton.icon(
-                onPressed: () => checkAdvertWording(context, rent: p.price),
-                icon: const Icon(Icons.rule),
-                label: const Text('Check advert wording'),
-              ),
-            if (kind != PropertyKind.rent && p.price != null)
-              OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        InvestPage(start: (kind: 'btl', inputs: {'price': p.price}), propertyId: p.id),
-                  ),
-                ),
-                icon: const Icon(Icons.calculate_outlined),
-                label: const Text('Appraise as a let'),
-              ),
+          if (market.prices.length > 1) ...[
+            const SizedBox(height: 8),
+            Text('Price history', style: t.titleSmall),
+            for (final pt in market.prices) Text('${niceDate(pt.at)}: ${gbp(pt.price)}', style: t.bodySmall),
           ],
-        ),
-      ],
+          const SizedBox(height: 16),
+          ListingMap(
+            key: ValueKey('map-${p.id}'),
+            label: p.price == null ? 'Here' : gbp(p.price!),
+            lat: p.lat,
+            lon: p.lon,
+            postcode: p.postcode,
+            address: p.address,
+            anchors: anchorPlaces(ref),
+          ),
+          const SizedBox(height: 16),
+          SavedAdvertCard(p),
+          HomeRecordsCard(p),
+          SectionCard(
+            title: 'Stage',
+            hint: 'hunt.stage',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final s in Stage.values)
+                      ChoiceChip(
+                        label: Text(s.label(kind)),
+                        selected: Stage.of(p.stage) == s,
+                        onSelected: (_) => ref.mutate((x) => x.book.setStage(p.id, s)),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Text('Rating'),
+                    for (var i = 1; i <= 5; i++)
+                      IconButton(
+                        tooltip: '$i of 5',
+                        icon: Icon(i <= p.rating ? Icons.star : Icons.star_border, color: lime),
+                        onPressed: () => ref.mutate(
+                          (x) => x.book.editProperty(p.id, (q) => q.copyWith(rating: i == p.rating ? 0 : i)),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          PriceCheckCard(p),
+          _ContactCard(p, agent),
+          const SizedBox(height: 12),
+          SectionCard(
+            title: 'Viewings',
+            trailing: Wrap(
+              children: [
+                TextButton.icon(
+                  onPressed: () => _checklist(context, ref, p, kind),
+                  icon: const Icon(Icons.checklist),
+                  label: const Text('Checklist'),
+                ),
+                TextButton.icon(
+                  onPressed: () => _bookViewing(context, ref, p),
+                  icon: const Icon(Icons.event_available_outlined),
+                  label: const Text('Book'),
+                ),
+              ],
+            ),
+            child: viewings.isEmpty
+                ? const Text('None booked.')
+                : Column(
+                    children: [
+                      for (final v in viewings)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(switch (v.status) {
+                            'done' => Icons.check_circle_outline,
+                            'cancelled' => Icons.cancel_outlined,
+                            _ => Icons.event_outlined,
+                          }),
+                          title: Text(niceDateTime(v.at)),
+                          subtitle: switch ([
+                            if (v.status == 'done') ?Impression.of(v.rating)?.label,
+                            if (v.notes.isNotEmpty) v.notes,
+                          ]) {
+                            [] => null,
+                            final lines => Text(lines.join(' · ')),
+                          },
+                          onTap: v.status == 'done' ? () => _viewingOutcome(context, ref, p, v) : null,
+                          trailing: PopupMenuButton<String>(
+                            tooltip: 'Viewing: done, cancelled or add to calendar',
+                            onSelected: (s) => switch (s) {
+                              'done' => _viewingOutcome(context, ref, p, v),
+                              'calendar' => addToCalendar(context, (viewing: v, home: p)),
+                              _ => ref.mutate((x) => x.book.save(x.db.viewings, v.copyWith(status: s), v.id)),
+                            },
+                            itemBuilder: (_) => [
+                              const PopupMenuItem(value: 'booked', child: Text('Booked')),
+                              const PopupMenuItem(value: 'done', child: Text('Done')),
+                              const PopupMenuItem(value: 'cancelled', child: Text('Cancelled')),
+                              if (v.status == 'booked') ...[
+                                const PopupMenuDivider(),
+                                const PopupMenuItem(value: 'calendar', child: Text('Add to calendar')),
+                              ],
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
+          const SizedBox(height: 12),
+          SectionCard(
+            title: 'Contact log',
+            trailing: TextButton.icon(
+              onPressed: () => logInteraction(context, ref, propertyId: p.id, contactId: p.agentId),
+              icon: const Icon(Icons.add_comment_outlined),
+              label: const Text('Add'),
+            ),
+            child: log.isEmpty
+                ? const Text('Nothing yet. Calls and messages started here are logged.')
+                : Column(
+                    children: [
+                      for (final i in log)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(channelIcons[i.channel] ?? Icons.chat_bubble_outline),
+                          title: Text(
+                            '${channelLabels[i.channel] ?? i.channel}${i.direction == 'in' ? ' from them' : ''} · ${niceDateTime(i.at)}',
+                          ),
+                          subtitle: Text(
+                            [
+                              i.summary,
+                              if (i.followUp != null) 'Follow up ${niceDate(i.followUp!)}',
+                            ].where((s) => s.isNotEmpty).join('\n'),
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
+          const SizedBox(height: 12),
+          SectionCard(
+            title: 'Notes',
+            trailing: IconButton(
+              tooltip: 'Edit notes',
+              icon: const Icon(Icons.edit_note),
+              onPressed: () => _editNotes(context, ref, p),
+            ),
+            child: Text(p.notes.isEmpty ? 'No notes.' : p.notes),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (p.postcode.isNotEmpty)
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context)
+                          .push(MaterialPageRoute(builder: (_) => ResearchPage(postcode: p.postcode))),
+                  icon: const Icon(Icons.insights_outlined),
+                  label: const Text('Area report'),
+                ),
+              if (kind == PropertyKind.rent)
+                OutlinedButton.icon(
+                  onPressed: () => checkAdvertWording(context, rent: p.price),
+                  icon: const Icon(Icons.rule),
+                  label: const Text('Check advert wording'),
+                ),
+              if (kind != PropertyKind.rent && p.price != null)
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          InvestPage(start: (kind: 'btl', inputs: {'price': p.price}), propertyId: p.id),
+                    ),
+                  ),
+                  icon: const Icon(Icons.calculate_outlined),
+                  label: const Text('Appraise as a let'),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

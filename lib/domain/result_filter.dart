@@ -143,7 +143,8 @@ class ResultFilter {
     if (skip != 'beds' && beds.isNotEmpty && !beds.contains(bedsOption(h))) return false;
     if (skip != 'price' && (minPrice != null || maxPrice != null)) {
       final p = h.price;
-      if (p == null || (minPrice != null && p < minPrice!) || (maxPrice != null && p > maxPrice!)) return false;
+      if (p == null || (minPrice != null && p < minPrice!) || (maxPrice != null && p > maxPrice!))
+        return false;
     }
     if (skip != 'furnishing' && furnishing.isNotEmpty && !furnishing.contains(furnishingOf(h))) return false;
     if (skip != 'features' && features.isNotEmpty) {
@@ -169,7 +170,12 @@ class Facets {
       for (final h in homes)
         if (f.matches(h, skip: section)) h,
     ];
-    List<Facet<T>> count<T>(String section, Iterable<T> Function(FoundHome h) of, String Function(T v) label, List<T> order) {
+    List<Facet<T>> count<T>(
+      String section,
+      Iterable<T> Function(FoundHome h) of,
+      String Function(T v) label,
+      List<T> order,
+    ) {
       final n = <T, int>{};
       for (final h in rest(section)) {
         for (final v in of(h)) {
@@ -182,23 +188,25 @@ class Facets {
       ];
     }
 
-    types = count<HomeType?>(
-      'type',
-      (h) => [homeTypeOf(h)],
-      (v) => v?.label ?? 'Type not stated',
-      [...HomeType.values, null],
+    types = count<HomeType?>('type', (h) => [homeTypeOf(h)], (v) => v?.label ?? 'Type not stated', [
+      ...HomeType.values,
+      null,
+    ]);
+    beds = count<int>(
+      'beds',
+      (h) => [?bedsOption(h)],
+      (v) => switch (v) {
+        0 => 'Studio',
+        5 => '5 or more',
+        _ => '$v bed',
+      },
+      [0, 1, 2, 3, 4, 5],
     );
-    beds = count<int>('beds', (h) => [?bedsOption(h)], (v) => switch (v) {
-      0 => 'Studio',
-      5 => '5 or more',
-      _ => '$v bed',
-    }, [0, 1, 2, 3, 4, 5]);
-    furnishing = count<String>(
-      'furnishing',
-      (h) => [?furnishingOf(h)],
-      (v) => v,
-      const ['Furnished', 'Part furnished', 'Unfurnished'],
-    );
+    furnishing = count<String>('furnishing', (h) => [?furnishingOf(h)], (v) => v, const [
+      'Furnished',
+      'Part furnished',
+      'Unfurnished',
+    ]);
     features = count<HomeFeature>(
       'features',
       (h) {
@@ -208,7 +216,12 @@ class Facets {
       (v) => v.label,
       HomeFeature.mustHaves.toList(),
     );
-    sites = count<String>('sites', (h) => h.sources, (v) => v, {for (final h in homes) ...h.sources}.toList()..sort());
+    sites = count<String>(
+      'sites',
+      (h) => h.sources,
+      (v) => v,
+      {for (final h in homes) ...h.sources}.toList()..sort(),
+    );
     distances = count<double>(
       'distance',
       (h) => [

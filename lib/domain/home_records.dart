@@ -190,7 +190,9 @@ class EpcRegister {
     return switch (r.statusCode) {
       200 => r.body,
       404 => '{"data":[]}',
-      401 || 403 => throw const EpcUnavailable('The EPC register did not accept your key. Copy it again in Settings.'),
+      401 || 403 => throw const EpcUnavailable(
+        'The EPC register did not accept your key. Copy it again in Settings.',
+      ),
       429 => throw const EpcUnavailable('The EPC register is busy. Try again in a few minutes.'),
       final c => throw EpcUnavailable('The EPC register answered with error $c.'),
     };

@@ -61,7 +61,8 @@ class _SavedAdvertCardState extends ConsumerState<SavedAdvertCard> {
       );
       if (d != null) await ref.mutate((s) => s.book.applyAdvert(p.id, d, ref.read(todayProvider)));
     } on SourceBlocked {
-      _note = '${_source?.label ?? 'The site'} asked to check you are not a robot. Open the advert to see it.';
+      _note =
+          '${_source?.label ?? 'The site'} asked to check you are not a robot. Open the advert to see it.';
     } on Object catch (e) {
       _note = 'Could not read the advert just now (${describeError(e)}).';
     } finally {
@@ -81,7 +82,11 @@ class _SavedAdvertCardState extends ConsumerState<SavedAdvertCard> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (advert != null)
-          AdvertSections(advert, rent: PropertyKind.of(p.kind) == PropertyKind.rent, fallbackDescription: words)
+          AdvertSections(
+            advert,
+            rent: PropertyKind.of(p.kind) == PropertyKind.rent,
+            fallbackDescription: words,
+          )
         else if (words.isNotEmpty)
           SectionCard(title: 'Description', child: Text(words)),
         if (_readable || _note.isNotEmpty)
@@ -229,7 +234,10 @@ class _HomeRecordsCardState extends ConsumerState<HomeRecordsCard> {
             Text('Energy certificate', style: t.titleSmall),
             FigureRow('Rating now', [epc.band, if (epc.score != null) '(${epc.score})'].join(' ')),
             if (epc.potentialBand.isNotEmpty)
-              FigureRow('Could be', [epc.potentialBand, if (epc.potentialScore != null) '(${epc.potentialScore})'].join(' ')),
+              FigureRow(
+                'Could be',
+                [epc.potentialBand, if (epc.potentialScore != null) '(${epc.potentialScore})'].join(' '),
+              ),
             if (epc.floorArea != null)
               FigureRow('Floor area', '${epc.floorArea} m² (${(epc.floorArea! * 10.764).round()} sq ft)'),
             if (epc.dwelling.isNotEmpty) FigureRow('Type', epc.dwelling),
@@ -237,12 +245,17 @@ class _HomeRecordsCardState extends ConsumerState<HomeRecordsCard> {
             if (epc.walls.isNotEmpty) FigureRow('Walls', epc.walls),
             if (epc.roof.isNotEmpty) FigureRow('Roof', epc.roof),
             if (epc.windows.isNotEmpty) FigureRow('Windows', epc.windows),
-            if (epc.heatingCostYear != null) FigureRow('Heating cost', '${gbp(epc.heatingCostYear!)} a year (estimate)'),
+            if (epc.heatingCostYear != null)
+              FigureRow('Heating cost', '${gbp(epc.heatingCostYear!)} a year (estimate)'),
             if (epc.date.isNotEmpty) FigureRow('Certificate from', niceDate(epc.date)),
             TextButton.icon(
               onPressed: () => openInApp(context, epc.page, title: 'Energy certificate'),
               icon: const Icon(Icons.open_in_new, size: 18),
-              label: Text(epc.upgrades > 0 ? 'See the certificate and its ${epc.upgrades} upgrades' : 'See the certificate'),
+              label: Text(
+                epc.upgrades > 0
+                    ? 'See the certificate and its ${epc.upgrades} upgrades'
+                    : 'See the certificate',
+              ),
             ),
           ],
           if (_unmatched.isNotEmpty)

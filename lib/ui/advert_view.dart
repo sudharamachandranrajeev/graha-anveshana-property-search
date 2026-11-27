@@ -75,7 +75,8 @@ class _PhotoGalleryState extends State<PhotoGallery> {
     super.dispose();
   }
 
-  void _go(int i) => _pages.animateToPage(i, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+  void _go(int i) =>
+      _pages.animateToPage(i, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +147,8 @@ class CopyLine extends StatelessWidget {
         tooltip: 'Copy the $what',
         visualDensity: VisualDensity.compact,
         icon: const Icon(Icons.copy, size: 18),
-        onPressed: () => copyText(context, text, what: '${what[0].toUpperCase()}${what.substring(1)} copied.'),
+        onPressed: () =>
+            copyText(context, text, what: '${what[0].toUpperCase()}${what.substring(1)} copied.'),
       ),
     ],
   );

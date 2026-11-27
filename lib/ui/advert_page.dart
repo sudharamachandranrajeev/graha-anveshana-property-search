@@ -89,107 +89,109 @@ class _AdvertPageState extends ConsumerState<AdvertPage> {
           final agent = (d?.agent.isNotEmpty ?? false) ? d!.agent : l.agent;
           return SelectionArea(
             child: ListView(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 96 + MediaQuery.paddingOf(context).bottom),
-            children: [
-              Readable(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (photos.isNotEmpty) PhotoGallery(photos),
-                    const SizedBox(height: 12),
-                    Text(
-                      h.price == null ? 'Price not shown' : '${gbp(h.price!)}${q.rent ? ' a month' : ''}',
-                      style: t.headlineSmall,
-                    ),
-                    CopyLine(l.address, what: 'address', style: t.titleMedium),
-                    if (facts.isNotEmpty) Text(facts),
-                    if (h.km != null)
-                      Text('${miles(h.km!)} from ${ref.read(searchProvider).centre?.label ?? 'the centre'}'),
-                    if (h.gone) ...[
-                      const SizedBox(height: 4),
-                      StatusLabel(Status.warning, q.rent ? 'Let agreed' : 'Sold or under offer'),
-                    ],
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        FilledButton.icon(
-                          onPressed: () => saveToHunt(context, ref, h, rent: q.rent),
-                          icon: const Icon(Icons.bookmark_add_outlined),
-                          label: const Text('Add to Shortlist'),
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 96 + MediaQuery.paddingOf(context).bottom),
+              children: [
+                Readable(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (photos.isNotEmpty) PhotoGallery(photos),
+                      const SizedBox(height: 12),
+                      Text(
+                        h.price == null ? 'Price not shown' : '${gbp(h.price!)}${q.rent ? ' a month' : ''}',
+                        style: t.headlineSmall,
+                      ),
+                      CopyLine(l.address, what: 'address', style: t.titleMedium),
+                      if (facts.isNotEmpty) Text(facts),
+                      if (h.km != null)
+                        Text(
+                          '${miles(h.km!)} from ${ref.read(searchProvider).centre?.label ?? 'the centre'}',
                         ),
-                        OutlinedButton.icon(
-                          onPressed: () => saveToResearch(context, ref, h, q),
-                          icon: const Icon(Icons.collections_bookmark_outlined),
-                          label: const Text('Add to a collection'),
-                        ),
-                        if (phone.isNotEmpty)
-                          OutlinedButton.icon(
-                            onPressed: () =>
-                                openUri(context, Uri(scheme: 'tel', path: phone.replaceAll(' ', ''))),
-                            icon: const Icon(Icons.call_outlined),
-                            label: Text('Call $phone'),
-                          ),
+                      if (h.gone) ...[
+                        const SizedBox(height: 4),
+                        StatusLabel(Status.warning, q.rent ? 'Let agreed' : 'Sold or under offer'),
                       ],
-                    ),
-                    if (h.copies.length > 1) ...[
-                      const SizedBox(height: 16),
-                      Text('On ${h.copies.length} sites', style: t.titleSmall),
+                      const SizedBox(height: 12),
                       Wrap(
                         spacing: 8,
+                        runSpacing: 8,
                         children: [
-                          for (var i = 0; i < h.copies.length; i++)
-                            ChoiceChip(
-                              label: Text(
-                                [
-                                  SourceId.ofKey(h.copies[i].source)?.label ?? h.copies[i].source,
-                                  if (h.copies[i].price != null) gbp(h.copies[i].price!),
-                                ].join(' '),
-                              ),
-                              selected: i == _copy,
-                              onSelected: (_) => setState(() => _copy = i),
+                          FilledButton.icon(
+                            onPressed: () => saveToHunt(context, ref, h, rent: q.rent),
+                            icon: const Icon(Icons.bookmark_add_outlined),
+                            label: const Text('Add to Shortlist'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () => saveToResearch(context, ref, h, q),
+                            icon: const Icon(Icons.collections_bookmark_outlined),
+                            label: const Text('Add to a collection'),
+                          ),
+                          if (phone.isNotEmpty)
+                            OutlinedButton.icon(
+                              onPressed: () =>
+                                  openUri(context, Uri(scheme: 'tel', path: phone.replaceAll(' ', ''))),
+                              icon: const Icon(Icons.call_outlined),
+                              label: Text('Call $phone'),
                             ),
                         ],
                       ),
-                    ],
-                    const SizedBox(height: 16),
-                    ListingMap(
-                      label: h.price == null ? 'Here' : gbp(h.price!),
-                      lat: h.lat,
-                      lon: h.lon,
-                      postcode: h.postcode,
-                      address: l.address,
-                      anchors: anchorPlaces(ref, centre: ref.watch(searchProvider).centre),
-                    ),
-                    const SizedBox(height: 16),
-                    if (snap.connectionState != ConnectionState.done)
-                      const Center(
-                        child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()),
-                      )
-                    else if (snap.hasError || d == null)
-                      _NotRead(site: _site, error: snap.error, text: l.description, onOpen: _openSite)
-                    else
-                      AdvertSections(d, rent: q.rent, fallbackDescription: l.description),
-                    if (agent.isNotEmpty)
-                      SectionCard(
-                        title: 'Agent',
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      if (h.copies.length > 1) ...[
+                        const SizedBox(height: 16),
+                        Text('On ${h.copies.length} sites', style: t.titleSmall),
+                        Wrap(
+                          spacing: 8,
                           children: [
-                            CopyLine(agent, what: 'agent'),
-                            if (phone.isNotEmpty) CopyLine(phone, what: 'phone number', style: tabular),
+                            for (var i = 0; i < h.copies.length; i++)
+                              ChoiceChip(
+                                label: Text(
+                                  [
+                                    SourceId.ofKey(h.copies[i].source)?.label ?? h.copies[i].source,
+                                    if (h.copies[i].price != null) gbp(h.copies[i].price!),
+                                  ].join(' '),
+                                ),
+                                selected: i == _copy,
+                                onSelected: (_) => setState(() => _copy = i),
+                              ),
                           ],
                         ),
+                      ],
+                      const SizedBox(height: 16),
+                      ListingMap(
+                        label: h.price == null ? 'Here' : gbp(h.price!),
+                        lat: h.lat,
+                        lon: h.lon,
+                        postcode: h.postcode,
+                        address: l.address,
+                        anchors: anchorPlaces(ref, centre: ref.watch(searchProvider).centre),
                       ),
-                    Text(
-                      'From $_site. Check the details with the agent before you commit.',
-                      style: t.bodySmall,
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      if (snap.connectionState != ConnectionState.done)
+                        const Center(
+                          child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()),
+                        )
+                      else if (snap.hasError || d == null)
+                        _NotRead(site: _site, error: snap.error, text: l.description, onOpen: _openSite)
+                      else
+                        AdvertSections(d, rent: q.rent, fallbackDescription: l.description),
+                      if (agent.isNotEmpty)
+                        SectionCard(
+                          title: 'Agent',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CopyLine(agent, what: 'agent'),
+                              if (phone.isNotEmpty) CopyLine(phone, what: 'phone number', style: tabular),
+                            ],
+                          ),
+                        ),
+                      Text(
+                        'From $_site. Check the details with the agent before you commit.',
+                        style: t.bodySmall,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
             ),
           );
         },

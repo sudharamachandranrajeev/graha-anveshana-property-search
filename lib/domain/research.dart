@@ -267,7 +267,11 @@ class Research {
   Future<List<({String name, String label})>> placesLike(String q, {bool postcode = false}) async {
     final body = await _get(
       postcode
-          ? Uri(scheme: 'https', host: 'api.postcodes.io', pathSegments: ['postcodes', q.trim(), 'autocomplete'])
+          ? Uri(
+              scheme: 'https',
+              host: 'api.postcodes.io',
+              pathSegments: ['postcodes', q.trim(), 'autocomplete'],
+            )
           : Uri.https('api.postcodes.io', '/places', {'q': q.trim(), 'limit': '20'}),
     );
     final result = (body as Map?)?['result'];
@@ -277,7 +281,10 @@ class Research {
     return [
       for (final p in result)
         if (p is Map && '${p['name_1'] ?? ''}'.toLowerCase().startsWith(q.trim().toLowerCase()))
-          if ([p['name_1'], p['county_unitary'] ?? p['region']].whereType<String>().where((s) => s.isNotEmpty).join(', ')
+          if ([
+                p['name_1'],
+                p['county_unitary'] ?? p['region'],
+              ].whereType<String>().where((s) => s.isNotEmpty).join(', ')
               case final label when seen.add(label))
             (name: '${p['name_1']}', label: label),
     ];

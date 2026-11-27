@@ -70,15 +70,23 @@ void main() {
     expect(r.collisions, (year: 2025, fatal: 0, serious: 6, slight: 21));
     // Decile 1, less 0.5 for flood and 1.5 for six serious: clamped to 1.
     expect(r.score, 1);
-    expect(r.reasons.first, startsWith('Much more crime than most areas: Leeds 111B is ranked 718 of 33,755'));
-    expect({for (final f in r.insuranceFactors) f.factor: f.level}, {
-      'Flood (buildings cover)': 'Low',
-      'Theft and break-ins (contents cover)': 'High',
-    });
+    expect(
+      r.reasons.first,
+      startsWith('Much more crime than most areas: Leeds 111B is ranked 718 of 33,755'),
+    );
+    expect(
+      {for (final f in r.insuranceFactors) f.factor: f.level},
+      {'Flood (buildings cover)': 'Low', 'Theft and break-ins (contents cover)': 'High'},
+    );
   });
 
   test('the score starts from the crime decile', () {
-    const quiet = CrimeIndex(index: 'Index of Multiple Deprivation 2025 (England)', area: 'X', rank: 33000, of: 33755);
+    const quiet = CrimeIndex(
+      index: 'Index of Multiple Deprivation 2025 (England)',
+      area: 'X',
+      rank: 33000,
+      of: 33755,
+    );
     expect(quiet.decile, 10);
     expect(const SafetyReport(crime: quiet).score, 10);
     expect(const SafetyReport(crime: quiet, flood: FloodBand.high).score, 7);

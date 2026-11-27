@@ -157,12 +157,14 @@ const floodReUrl = 'https://www.floodre.co.uk/';
 const _englandIod =
     'https://services.arcgis.com/qHLhLQrcvEnxjtPr/arcgis/rest/services/'
     'Index_of_Multiple_Deprivation_(IMD)_2025_England/FeatureServer/4/query';
-const _walesWimd = 'https://services3.arcgis.com/tRh0agnyck3rPSQG/arcgis/rest/services/WIMD_2025/FeatureServer/0/query';
+const _walesWimd =
+    'https://services3.arcgis.com/tRh0agnyck3rPSQG/arcgis/rest/services/WIMD_2025/FeatureServer/0/query';
 const _scotlandSimd = 'https://maps.gov.scot/server/rest/services/ScotGov/PeopleSociety/MapServer/7/query';
 const _collisions2025 =
     'https://services5.arcgis.com/qUwnXV5uf1zyW6Y2/arcgis/rest/services/'
     'RoadCasualtyStatsCollision_GB_DfT_Point_2025/FeatureServer/0/query';
-const _floodWfs = 'https://environment.data.gov.uk/geoservices/datasets/96ab4342-82c1-4095-87f1-0082e8d84ef1/wfs';
+const _floodWfs =
+    'https://environment.data.gov.uk/geoservices/datasets/96ab4342-82c1-4095-87f1-0082e8d84ef1/wfs';
 
 /// Runs the checks. Answers are kept for the session.
 class SafetyChecks {
@@ -171,7 +173,9 @@ class SafetyChecks {
   static final _cache = <String, SafetyReport>{};
 
   Future<Object?> _get(String url, Map<String, String> query) async {
-    final r = await _http.get(Uri.parse(url).replace(queryParameters: query)).timeout(const Duration(seconds: 30));
+    final r = await _http
+        .get(Uri.parse(url).replace(queryParameters: query))
+        .timeout(const Duration(seconds: 30));
     if (r.statusCode != 200) throw SafetyUnavailable('${Uri.parse(url).host} said ${r.statusCode}');
     final j = jsonDecode(r.body);
     // ArcGIS reports errors inside a 200 answer.

@@ -60,7 +60,9 @@ class AdvertDetails {
       photos: list('photos'),
       floorplans: list('floorplans'),
       features: list('features'),
-      facts: {for (final MapEntry(:key, :value) in ((j['facts'] as Map?) ?? const {}).entries) '$key': '$value'},
+      facts: {
+        for (final MapEntry(:key, :value) in ((j['facts'] as Map?) ?? const {}).entries) '$key': '$value',
+      },
       agent: '${j['agent'] ?? ''}',
       phone: '${j['phone'] ?? ''}',
     );
@@ -87,10 +89,14 @@ String homeSummary({
     if (facts.isNotEmpty) facts.join(' · '),
     if (advert != null) ...[
       for (final e in advert.facts.entries) '${e.key}: ${e.value}',
-      if (advert.features.isNotEmpty) ['', 'Key features', for (final f in advert.features) '• $f'].join('\n'),
+      if (advert.features.isNotEmpty)
+        ['', 'Key features', for (final f in advert.features) '• $f'].join('\n'),
     ],
     if (agent.isNotEmpty || phone.isNotEmpty || email.isNotEmpty)
-      ['', 'Agent: ${[agent, phone, email].where((s) => s.isNotEmpty).join(', ')}'].join('\n'),
+      [
+        '',
+        'Agent: ${[agent, phone, email].where((s) => s.isNotEmpty).join(', ')}',
+      ].join('\n'),
     if (url.isNotEmpty) ['', url].join('\n'),
   ].join('\n');
 }

@@ -47,11 +47,17 @@ class _StreetViewPanelState extends State<StreetViewPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (widget.rough)
-            Text('The advert gives only the postcode district, so this is its middle, not the home.', style: t.bodySmall),
+            Text(
+              'The advert gives only the postcode district, so this is its middle, not the home.',
+              style: t.bodySmall,
+            ),
           if (!hasWebView)
             Text('This build has no in-app browser to show Street View in.', style: t.bodySmall)
           else if (!_shown)
-            Text('Look at the street from the road. Tapping Show sends this map point to Google.', style: t.bodySmall)
+            Text(
+              'Look at the street from the road. Tapping Show sends this map point to Google.',
+              style: t.bodySmall,
+            )
           else
             Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -72,7 +78,9 @@ class _StreetViewPanelState extends State<StreetViewPanel> {
                     gestureRecognizers: {Factory<OneSequenceGestureRecognizer>(EagerGestureRecognizer.new)},
                     shouldOverrideUrlLoading: (_, action) async {
                       final u = action.request.url;
-                      if (u == null || !action.isForMainFrame || (u.host.endsWith('google.com') && u.path == '/maps')) {
+                      if (u == null ||
+                          !action.isForMainFrame ||
+                          (u.host.endsWith('google.com') && u.path == '/maps')) {
                         return NavigationActionPolicy.ALLOW;
                       }
                       if (context.mounted) await openInApp(context, u.uriValue);
