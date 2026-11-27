@@ -14,6 +14,7 @@ import '../domain/tax.dart';
 import 'browser_page.dart';
 import 'common.dart';
 import 'look.dart';
+import 'safety_card.dart';
 import 'invest_page.dart';
 
 /// What to check before buying land or a building to develop, by topic.
@@ -419,6 +420,7 @@ class _ReportView extends StatelessWidget {
                   ),
                 ),
           ],
+          SafetyCard(at: (lat: p.lat, lon: p.lon)),
           ..._renting(context),
           for (final n in r.notes)
             Padding(padding: const EdgeInsets.only(top: 8), child: StatusLabel(Status.info, n)),

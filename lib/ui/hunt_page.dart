@@ -247,6 +247,32 @@ class _HuntPageState extends ConsumerState<HuntPage> {
     final dearest = mine.map((p) => p.price ?? 0).fold(0, (a, b) => a > b ? a : b);
     final closest = inPlay.map(dist).nonNulls.fold<double?>(null, (a, b) => a == null || b < a ? b : a);
     final day = today();
+    // A home still in play whose advert says it is let, sold or taken down
+    // leaves its stage for a section of its own, after the live ones.
+    bool gone(Property p) => Stage.of(p.stage).active && listingGone(p.listingStatus);
+    List<Widget> section(String title, List<Property> rows, {Stage? stage}) {
+      if (rows.isEmpty) return const [];
+      rows.sort((a, b) => sort.compare(a, b, dist));
+      return [
+        _StageHeading('$title (${rows.length})'),
+        for (final p in rows)
+          PropertyCard(
+            p,
+            distance: dist(p),
+            best: top != null && p.id == top.id,
+            share: dearest > 0 && p.price != null ? p.price! / dearest : null,
+            quietDays: stage == Stage.enquired || stage == Stage.viewing
+                ? daysWithoutReply([
+                    for (final i in logOf[p.id] ?? const <Interaction>[])
+                      (channel: i.channel, direction: i.direction, at: i.at),
+                  ], day)
+                : null,
+            picked: _picking ? _picked.contains(p.id) : null,
+            onPick: () => _pick(p.id),
+          ),
+      ];
+    }
+
     return [
       FigureCard(
         eyebrow: kind == PropertyKind.rent ? 'To rent · in play' : 'To buy · in play',
@@ -257,30 +283,19 @@ class _HuntPageState extends ConsumerState<HuntPage> {
       if (hidden > 0)
         Padding(padding: const EdgeInsets.only(top: 8), child: Text('$hidden hidden by the filters.')),
       for (final stage in Stage.values)
-        if (stage.active || showDropped)
-          ...() {
-            final rows = mine.where((p) => Stage.of(p.stage) == stage).toList()
-              ..sort((a, b) => sort.compare(a, b, dist));
-            if (rows.isEmpty) return const <Widget>[];
-            return [
-              _StageHeading('${stage.label(kind)} (${rows.length})'),
-              for (final p in rows)
-                PropertyCard(
-                  p,
-                  distance: dist(p),
-                  best: top != null && p.id == top.id,
-                  share: dearest > 0 && p.price != null ? p.price! / dearest : null,
-                  quietDays: stage == Stage.enquired || stage == Stage.viewing
-                      ? daysWithoutReply([
-                          for (final i in logOf[p.id] ?? const <Interaction>[])
-                            (channel: i.channel, direction: i.direction, at: i.at),
-                        ], day)
-                      : null,
-                  picked: _picking ? _picked.contains(p.id) : null,
-                  onPick: () => _pick(p.id),
-                ),
-            ];
-          }(),
+        if (stage.active)
+          ...section(
+            stage.label(kind),
+            mine.where((p) => Stage.of(p.stage) == stage && !gone(p)).toList(),
+            stage: stage,
+          ),
+      ...section(
+        kind == PropertyKind.rent ? 'Already let or taken down' : 'Sold, under offer or taken down',
+        mine.where(gone).toList(),
+      ),
+      for (final stage in Stage.values)
+        if (!stage.active && showDropped)
+          ...section(stage.label(kind), mine.where((p) => Stage.of(p.stage) == stage).toList(), stage: stage),
     ];
   }
 

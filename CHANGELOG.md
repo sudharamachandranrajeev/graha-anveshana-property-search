@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.15.0
+
+A fuller page for every saved home, a safety score, and quicker Search.
+
+- **Street View** on every home and advert, inside the page. It loads only when you tap Show.
+- **Copy anything.** Select any text on a home's page, or tap the copy buttons beside the
+  address and the agent's name, phone and e-mail. **Copy details** copies the whole home.
+- **The whole advert stays with a saved home**: every photo, floor plans, features and details.
+  It is checked again when you open the home; a price change is logged, and a home that has been
+  let, sold or taken down moves to its own Shortlist section.
+- **The home's records**: its energy certificate (with your own free key, Settings → Energy
+  certificates) and what it sold for before (England and Wales).
+- **Safety score** from 1 to 10 on homes and areas: the official crime index, road collisions
+  within 500 m and flood risk, with what home insurers weigh and links to compare quotes.
+- **Search**: each result says what kind of home it is; suggestions show as you type; tick-box
+  filters beside the results (type, bedrooms, price, furnishing, features, distance, site) with
+  counts, or under **Filters** on a phone.
+
 ## 0.14.1
 
 Everything stays inside the app, and search results show where each home is.

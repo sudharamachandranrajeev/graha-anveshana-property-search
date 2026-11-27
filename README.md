@@ -46,6 +46,12 @@ not advice.
   sites shows once. Open any of them to see every photo, the description, the facts and the
   agent, inside the app, and save it to Shortlist or a collection. Throw out a home you do not
   want and it never shows again; **Profile → Trash** brings it back.
+- 💡 **Suggestions as you type** – your past and saved searches, and town and postcode names, show
+  under the Search bar while you type. Tap one to search it.
+- ☑️ **Tick down the results** – every card says what kind of home it is (flat, terraced,
+  semi-detached…). Tick boxes beside the results narrow them by type, bedrooms, price, furnishing,
+  what the advert mentions, distance and site, with a count beside each. On a phone, tap
+  **Filters**.
 - 🎯 **Only the homes you would live in** – tick must-haves (garden, driveway, en suite, pets
   allowed…) and never-shows (retirement, shared ownership, auctions, house shares…), draw the
   area you want on the map, and set "at most 30 minutes by car, bike or on foot to Work".
@@ -56,6 +62,20 @@ not advice.
   first ("For you"), learnt on your device from their price, bedrooms, district and features.
 - 🏠 **Every home in one list** – homes to rent or buy, grouped by stage: new, liked,
   enquired, viewing, applied, agreed. Add one from Search, an advert link, or type it in.
+  Each saved home keeps its whole advert (every photo, floor plans, features and details), so it
+  is still there after the site takes it down. The app checks the advert again when you open the
+  home. A home that has been let or sold moves to its own section.
+- 📋 **Copy anything** – select any words on a home's page, or tap the copy button beside the
+  address, the agent's name, phone or e-mail. **Copy details** (top right) copies the whole home,
+  ready to paste into a message.
+- 🛣️ **Street View** – look at the street from the road, inside the home's page. Tap **Show**.
+- 🛡️ **How safe is the area?** – a score from 1 to 10 on every home and area, with the reasons:
+  where it ranks on the official crime index, road collisions with injuries within 500 m, and the
+  flood risk. It also shows what home insurers weigh there (flood, break-ins) and opens the
+  comparison sites for a quote. Tap **Safety**, then **Check**.
+- 📜 **The home's own records** – its energy certificate (rating, floor area, heating, suggested
+  upgrades) and what it sold for before, from the official registers (England and Wales). The
+  energy certificate needs a free key; **Settings → Energy certificates** shows how to get one.
 - 📍 **How far from your places** – add work, family or a school in **Profile**, and every home
   in Search and Shortlist shows how far it is from each, and on request how long it takes by car,
   bike or on foot.
@@ -232,6 +252,13 @@ Turn on sync in **Settings → Sync**. You need a sync server you own; the
 [Brahma sync server guide](https://github.com/sudharamachandranrajeev/brahma-life-suite/tree/main/server)
 walks you through it. **Write down the recovery key** it shows and keep it safe.
 
+## ⬆️ Updating
+
+Update from inside the app. When a new version is out, a banner says so at start-up. Tap
+**Update**, or go to **Settings → About → Check for updates**. The app downloads the new version,
+checks it against the release's checksums and installs it. Your data is kept. See
+[How do I update?](#-faq-and-troubleshooting) in the FAQ for each device.
+
 ## 🧭 How it works
 
 ```mermaid
@@ -265,7 +292,8 @@ flowchart LR
   postcodes.io. Your places (Profile) are looked up there too, and sync with your other devices.
   **Directions and travel time** opens Google Maps with the two points.
 - **What leaves the device**: your searches (to the sites you search, and the place name to
-  postcodes.io or OpenStreetMap), postcodes for area reports, links you add, and Watch requests.
+  postcodes.io or OpenStreetMap), postcodes for area reports and home records, map points for
+  Street View and Safety, the advert link of a saved home you open, links you add, and Watch requests.
   Nothing else unless you turn on sync.
 
 > [!IMPORTANT]
@@ -359,6 +387,16 @@ Only map points, never names or addresses, and only when you ask.
   Open Government Licence).
 - **Sun**: worked out on your device; nothing is sent.
 - **Coal mining and radon**: links that open the Mining Remediation Authority and UKHSA maps.
+- **Street View**: when you tap **Show**, the home's map point goes to Google, which shows its
+  Street View.
+- **The home's records**: when you tap **Look up**, the postcode goes to HM Land Registry, and with
+  your own key to the government's EPC register. The app picks this home out of the answers on
+  your device.
+- **Suggestions as you type**: the place you are typing goes to postcodes.io.
+- **Safety**: when you tap **Check**, the map point goes to the crime index map (Esri UK for
+  England, a public map for Wales, the Scottish Government for Scotland), the Department for
+  Transport's collision map and the Environment Agency's flood map. Northern Ireland has no crime
+  index here, so no score.
 </details>
 
 <details>

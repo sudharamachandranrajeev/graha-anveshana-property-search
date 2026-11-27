@@ -4,10 +4,13 @@ import 'package:brahma_core/brahma_core.dart';
 import 'package:drift/drift.dart';
 
 import '../db/database.dart';
+import 'advert.dart';
 import 'contact_links.dart';
+import 'home_records.dart';
 import 'listing.dart';
 import 'pipeline.dart';
 import 'price_log.dart';
+import 'research.dart' show Sale;
 
 /// Pref keys. The prefs table is shared by every Brahma app, so Anveshana's
 /// keys carry its prefix.
@@ -31,6 +34,9 @@ abstract final class PrefKeys {
 
   /// The Dashboard's budget and move-by date for renting and buying.
   static const huntGoals = 'anveshana.dashboard.goals';
+
+  /// The user's own key for the EPC register (see home_records.dart).
+  static const epcKey = 'anveshana.epc.key';
 }
 
 /// Where distances are measured from (the user's home or work).
@@ -219,6 +225,49 @@ class PropertyBook {
     }
     return n;
   });
+
+  /// Keeps what a saved home's advert page said on [today]: the whole
+  /// advert (so it stays after the site takes it down), its price in the
+  /// price history and its status (let agreed, sold, taken down). An advert
+  /// read empty keeps the one kept before.
+  Future<void> applyAdvert(String id, AdvertDetails d, String today) => editProperty(id, (p) {
+    final meta = (jsonDecode(p.meta) as Map).cast<String, Object?>();
+    final seen = Listing(
+      source: p.source,
+      sourceId: p.sourceId ?? '',
+      url: p.url,
+      address: p.address,
+      price: d.price,
+    );
+    return p.copyWith(
+      price: Value(d.price ?? p.price),
+      listingStatus: d.status.isEmpty ? p.listingStatus : d.status,
+      imageUrl: Value(d.photos.firstOrNull ?? p.imageUrl),
+      meta: jsonEncode(
+        {
+          ...d.status == 'withdrawn' ? meta : withSeen(meta, seen, today),
+          // "Last seen in Search" stays Search's.
+          'seen': meta['seen'],
+          if (!d.isEmpty) 'advert': d.toJson(),
+          'advertRead': today,
+        }..removeWhere((k, v) => k == 'seen' && v == null),
+      ),
+    );
+  });
+
+  /// Keeps the house's own records: its energy certificate and past sales.
+  Future<void> saveRecords(String id, {EpcCertificate? epc, List<Sale>? sales, required String today}) =>
+      editProperty(id, (p) {
+        final meta = (jsonDecode(p.meta) as Map).cast<String, Object?>();
+        return p.copyWith(
+          meta: jsonEncode({
+            ...meta,
+            'epc': ?epc?.toJson(),
+            'sales': ?sales?.map((s) => s.toJson()).toList(),
+            'recordsRead': today,
+          }),
+        );
+      });
 
   Future<void> setStage(String propertyId, Stage stage) =>
       editProperty(propertyId, (p) => p.copyWith(stage: stage.id));

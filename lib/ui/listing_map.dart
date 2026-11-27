@@ -13,6 +13,8 @@ import '../domain/travel.dart';
 import 'area_checks_card.dart';
 import 'common.dart';
 import 'homes_map.dart';
+import 'safety_card.dart';
+import 'street_view.dart';
 
 /// The places a home page always offers to measure from: the user's home
 /// point (Settings) and [centre], the search's place.
@@ -263,7 +265,11 @@ class _ListingMapState extends ConsumerState<ListingMap> {
             label: const Text('Add a place'),
           ),
         ),
-        if (at != null) AreaChecksCard(at: (lat: at.lat, lon: at.lon), rough: at.rough),
+        if (at != null) ...[
+          StreetViewPanel(lat: at.lat, lon: at.lon, rough: at.rough),
+          SafetyCard(at: (lat: at.lat, lon: at.lon), rough: at.rough),
+          AreaChecksCard(at: (lat: at.lat, lon: at.lon), rough: at.rough),
+        ],
       ],
     );
   }

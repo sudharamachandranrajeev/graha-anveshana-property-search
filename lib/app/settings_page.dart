@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/book.dart';
+import '../domain/home_records.dart' show epcAccountPage;
+import '../ui/browser_page.dart';
 import '../ui/common.dart';
 import '../ui/search_page.dart';
 import 'providers.dart';
@@ -38,19 +40,56 @@ class SettingsPage extends ConsumerWidget {
           ),
         ),
         const SearchSitesCard(),
+        SectionCard(
+          title: 'Energy certificates',
+          trailing: TextButton(onPressed: () => _editEpcKey(context, ref), child: const Text('Set key')),
+          child: const Text(
+            'A saved home can show its energy certificate (EPC): rating, floor area, heating and '
+            'suggested upgrades. The government register needs a free key:\n'
+            '1. Choose Set key, then Get a key. Sign in or create a GOV.UK One Login account.\n'
+            '2. Copy the key shown on the "My account" page and paste it here.',
+          ),
+        ),
         const AppLockCard(),
         const HintsCard(),
         const SyncCard(),
         const SecurityCard(
           network:
               'Nothing leaves the device unless you search (the sites you search are read then, from this '
-              'device), open a site in the app, sign in to sync, look up a postcode, add a link or use '
+              'device), open a site in the app, sign in to sync, look up a postcode or a home\'s records, '
+              'show Street View (Google gets the map point), check an area\'s safety, add a link or use '
               'Brahma Watch.',
         ),
         const AboutCard(
           description: 'Property search, renting, buying, investment, development and lettings.',
         ),
       ],
+    );
+  }
+
+  Future<void> _editEpcKey(BuildContext context, WidgetRef ref) async {
+    final key = TextEditingController(
+      text: await ref.read(sessionProvider).book.pref<String>(PrefKeys.epcKey, ''),
+    );
+    if (!context.mounted) return;
+    await showFormDialog(
+      context,
+      title: 'EPC register key',
+      fields: (_) => [
+        Field(key, 'Key', helper: 'Sent only to the EPC register. Synced end-to-end encrypted.'),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () => openInApp(context, epcAccountPage, title: 'EPC register'),
+            icon: const Icon(Icons.open_in_new, size: 18),
+            label: const Text('Get a key'),
+          ),
+        ),
+      ],
+      onSave: () async {
+        await ref.mutate((s) => s.book.setPref(PrefKeys.epcKey, key.text.trim()));
+        return null;
+      },
     );
   }
 

@@ -9,6 +9,7 @@ import '../domain/listing.dart';
 import '../domain/page_reader.dart';
 import '../domain/property_search.dart';
 import '../domain/research.dart';
+import '../domain/safety.dart';
 import '../domain/search_request.dart';
 import '../domain/sources.dart';
 import '../domain/travel.dart';
@@ -30,6 +31,7 @@ final travelTimesProvider = Provider<TravelTimes>((ref) => TravelTimes(ref.read(
 /// Area checks (schools, building outline) from OpenStreetMap, cached for
 /// the session.
 final areaChecksProvider = Provider<AreaChecks>((ref) => AreaChecks(ref.read(searchHttpProvider)));
+final safetyChecksProvider = Provider<SafetyChecks>((ref) => SafetyChecks(ref.read(searchHttpProvider)));
 
 /// Loads a page in a hidden web view: its HTML and its advert cards
 /// ([cardsScript]).

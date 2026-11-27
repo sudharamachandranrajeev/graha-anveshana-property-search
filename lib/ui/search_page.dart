@@ -14,8 +14,10 @@ import '../domain/more_sites.dart';
 import '../domain/page_reader.dart';
 import '../domain/pipeline.dart';
 import '../domain/property_search.dart';
+import '../domain/result_filter.dart';
 import '../domain/search_request.dart';
 import '../domain/sources.dart';
+import '../domain/suggestions.dart';
 import '../domain/taste.dart';
 import '../domain/trash.dart';
 import '../domain/travel.dart';
@@ -23,6 +25,7 @@ import 'advert_page.dart';
 import 'browser_page.dart';
 import 'common.dart';
 import 'homes_map.dart';
+import 'result_filters.dart';
 import 'searches_page.dart';
 
 /// Recent searches shown on the start screen.
@@ -251,11 +254,56 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   /// Results on a map instead of a list.
   var _onMap = false;
 
+  /// The ticks in the filter panel, for the search they were made on: a
+  /// new search starts with none.
+  var _ticks = const ResultFilter();
+  SearchRequest? _ticksFor;
+
   @override
   void dispose() {
     _text.dispose();
     _focus.dispose();
     super.dispose();
+  }
+
+  /// Counts keystrokes, so only the last one asks for places.
+  var _typing = 0;
+
+  /// Suggestions for what is typed: matching past and saved searches at
+  /// once, then places finishing the one being typed (asked of postcodes.io
+  /// after a short pause, so not on every key).
+  Future<Iterable<Suggestion>> _suggest(TextEditingValue v) async {
+    final text = v.text;
+    final n = ++_typing;
+    if (text.trim().length < 2) return const [];
+    final history = ref.read(searchHistoryProvider).value ?? const [];
+    final saved = ref.read(savedSearchesProvider).value ?? const [];
+    final past = [
+      for (final p in pastMatches(text, [
+        for (final s in saved) named(s.request),
+        for (final r in history) named(r),
+      ]))
+        (shown: p, text: p, past: true),
+    ];
+    final typing = placeBeingTyped(text);
+    if (typing == null) return past;
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    if (n != _typing || !mounted) return past;
+    try {
+      final places = await placesStarting(ref.read(searchHttpProvider), typing.place);
+      return [
+        ...past,
+        for (final p in places)
+          (
+            shown: '${typing.before}${p.label}',
+            text: typing.before.isEmpty ? p.name : '${typing.before}${p.name}',
+            past: false,
+          ),
+      ];
+    } on Object {
+      // Offline or postcodes.io busy: the user's own searches still show.
+      return past;
+    }
   }
 
   Future<void> _go([String? text]) async {
@@ -312,7 +360,160 @@ class _SearchPageState extends ConsumerState<SearchPage> {
       for (final h in s.homes)
         if (!isTrashed(h, trash)) h,
     ];
-    final homes = sortHomes(kept, sort, likeness: (h) => _likeness(taste, h));
+    if (!identical(q, _ticksFor)) {
+      _ticksFor = q;
+      _ticks = const ResultFilter();
+    }
+    final homes = sortHomes(
+      [
+        for (final h in kept)
+          if (_ticks.matches(h)) h,
+      ],
+      sort,
+      likeness: (h) => _likeness(taste, h),
+    );
+    // Wide screens keep the filters in a column on the left, as shops do;
+    // narrow ones open them from a button.
+    final side = q != null && MediaQuery.sizeOf(context).width >= 1100;
+    final panel = q == null
+        ? null
+        : ResultFilterPanel(
+            homes: kept,
+            filter: _ticks,
+            rent: q.rent,
+            siteLabel: (k) => SourceId.ofKey(k)?.label ?? k,
+            onChanged: (f) => setState(() => _ticks = f),
+          );
+    final results = NotificationListener<ScrollNotification>(
+      onNotification: _onScroll,
+      child: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            sliver: SliverToBoxAdapter(
+              child: Readable(
+                child: SizedBox(width: double.infinity, child: _bar(context)),
+              ),
+            ),
+          ),
+          if (q == null)
+            SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverToBoxAdapter(
+                child: Readable(
+                  child: SizedBox(width: double.infinity, child: _start(context)),
+                ),
+              ),
+            )
+          else ...[
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              sliver: SliverToBoxAdapter(
+                child: Readable(
+                  child: SizedBox(width: double.infinity, child: _filters(context, q)),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              sliver: SliverToBoxAdapter(
+                child: Readable(
+                  child: SizedBox(width: double.infinity, child: _sites(context, s)),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              sliver: SliverToBoxAdapter(child: Readable(child: MoreSitesTile(q))),
+            ),
+            if (!side)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                sliver: SliverToBoxAdapter(
+                  child: Readable(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _filterSheet(context, kept, q),
+                        icon: const Icon(Icons.filter_list),
+                        label: Text(_ticks.isEmpty ? 'Filters' : 'Filters (${_ticks.count})'),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              sliver: SliverToBoxAdapter(
+                child: Readable(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: _summary(context, s, sort, taste, shown: homes.length),
+                  ),
+                ),
+              ),
+            ),
+            if (_onMap)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                sliver: SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: (MediaQuery.sizeOf(context).height * 0.65).clamp(320, 760),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: HomesMap(
+                        key: ValueKey(q.toJson().toString()),
+                        centre: s.centre == null ? null : (lat: s.centre!.lat, lon: s.centre!.lon),
+                        centreLabel: s.centre?.label ?? '',
+                        shape: q.shape,
+                        onDraw: (shape) => ref.read(searchProvider.notifier).refine(q.copyWith(shape: shape)),
+                        homes: [
+                          for (final h in homes)
+                            MapHome(
+                              label: h.price == null
+                                  ? (h.beds == null ? 'Home' : '${h.beds} bed')
+                                  : gbp(h.price!),
+                              lat: h.lat,
+                              lon: h.lon,
+                              postcode: h.postcode,
+                              address: h.main.address,
+                              onTap: () =>
+                                  Navigator.of(context)
+                                      .push(MaterialPageRoute<void>(builder: (_) => AdvertPage(h, q))),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                sliver: SliverList.builder(
+                  itemCount: homes.length,
+                  itemBuilder: (context, i) {
+                    final card = Readable(
+                      child: _HomeCard(
+                        homes[i],
+                        q,
+                        onThrowOut: _throwOut,
+                        first: i == 0,
+                        likeYours: taste.strong && _likeness(taste, homes[i]) >= 0.75,
+                      ),
+                    );
+                    return i == 0 ? TourTarget('search.result', child: card) : card;
+                  },
+                ),
+              ),
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 96 + MediaQuery.paddingOf(context).bottom),
+              sliver: SliverToBoxAdapter(child: Center(child: _tail(s))),
+            ),
+          ],
+        ],
+      ),
+    );
     return PageScaffold(
       title: 'Search',
       actions: [
@@ -323,138 +524,103 @@ class _SearchPageState extends ConsumerState<SearchPage> {
               Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SearchesPage())),
         ),
       ],
-      body: NotificationListener<ScrollNotification>(
-        onNotification: _onScroll,
-        child: CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              sliver: SliverToBoxAdapter(
-                child: Readable(
-                  child: SizedBox(width: double.infinity, child: _bar(context)),
-                ),
-              ),
-            ),
-            if (q == null)
-              SliverPadding(
-                padding: const EdgeInsets.all(16),
-                sliver: SliverToBoxAdapter(
-                  child: Readable(
-                    child: SizedBox(width: double.infinity, child: _start(context)),
+      body: side
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 280,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 8, 96),
+                    child: panel,
                   ),
                 ),
-              )
-            else ...[
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                sliver: SliverToBoxAdapter(
-                  child: Readable(
-                    child: SizedBox(width: double.infinity, child: _filters(context, q)),
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                sliver: SliverToBoxAdapter(
-                  child: Readable(
-                    child: SizedBox(width: double.infinity, child: _sites(context, s)),
-                  ),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                sliver: SliverToBoxAdapter(child: Readable(child: MoreSitesTile(q))),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                sliver: SliverToBoxAdapter(
-                  child: Readable(
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: _summary(context, s, sort, taste, shown: kept.length),
-                    ),
-                  ),
-                ),
-              ),
-              if (_onMap)
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  sliver: SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: (MediaQuery.sizeOf(context).height * 0.65).clamp(320, 760),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: HomesMap(
-                          key: ValueKey(q.toJson().toString()),
-                          centre: s.centre == null ? null : (lat: s.centre!.lat, lon: s.centre!.lon),
-                          centreLabel: s.centre?.label ?? '',
-                          shape: q.shape,
-                          onDraw: (shape) =>
-                              ref.read(searchProvider.notifier).refine(q.copyWith(shape: shape)),
-                          homes: [
-                            for (final h in homes)
-                              MapHome(
-                                label: h.price == null
-                                    ? (h.beds == null ? 'Home' : '${h.beds} bed')
-                                    : gbp(h.price!),
-                                lat: h.lat,
-                                lon: h.lon,
-                                postcode: h.postcode,
-                                address: h.main.address,
-                                onTap: () =>
-                                    Navigator.of(context)
-                                        .push(MaterialPageRoute<void>(builder: (_) => AdvertPage(h, q))),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  sliver: SliverList.builder(
-                    itemCount: homes.length,
-                    itemBuilder: (context, i) {
-                      final card = Readable(
-                        child: _HomeCard(
-                          homes[i],
-                          q,
-                          onThrowOut: _throwOut,
-                          first: i == 0,
-                          likeYours: taste.strong && _likeness(taste, homes[i]) >= 0.75,
-                        ),
-                      );
-                      return i == 0 ? TourTarget('search.result', child: card) : card;
-                    },
-                  ),
-                ),
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(16, 8, 16, 96 + MediaQuery.paddingOf(context).bottom),
-                sliver: SliverToBoxAdapter(child: Center(child: _tail(s))),
-              ),
-            ],
-          ],
-        ),
-      ),
+                const VerticalDivider(width: 1),
+                Expanded(child: results),
+              ],
+            )
+          : results,
     );
   }
+
+  /// The filters in a sheet, for narrow screens.
+  Future<void> _filterSheet(BuildContext context, List<FoundHome> kept, SearchRequest q) =>
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        showDragHandle: true,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setSheet) => DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.8,
+            builder: (context, scroll) => SingleChildScrollView(
+              controller: scroll,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+              child: ResultFilterPanel(
+                homes: kept,
+                filter: _ticks,
+                rent: q.rent,
+                siteLabel: (k) => SourceId.ofKey(k)?.label ?? k,
+                onChanged: (f) {
+                  setState(() => _ticks = f);
+                  setSheet(() {});
+                },
+              ),
+            ),
+          ),
+        ),
+      );
 
   Widget _bar(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       TourTarget(
         'search.bar',
-        child: TextField(
-          controller: _text,
-          focusNode: _focus,
-          textInputAction: TextInputAction.search,
-          onSubmitted: (_) => _go(),
-          decoration: InputDecoration(
-            hintText: 'e.g. 2 bed to rent in Leeds under £900 with parking',
-            prefixIcon: const Icon(Icons.search),
-            suffixIcon: IconButton(tooltip: 'Search', icon: const Icon(Icons.arrow_forward), onPressed: _go),
+        child: LayoutBuilder(
+          builder: (context, box) => RawAutocomplete<Suggestion>(
+            textEditingController: _text,
+            focusNode: _focus,
+            optionsBuilder: _suggest,
+            displayStringForOption: (s) => s.text,
+            onSelected: (s) => _go(s.text),
+            fieldViewBuilder: (context, controller, focus, _) => TextField(
+              controller: controller,
+              focusNode: focus,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => _go(),
+              decoration: InputDecoration(
+                hintText: 'e.g. 2 bed to rent in Leeds under £900 with parking',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  tooltip: 'Search',
+                  icon: const Icon(Icons.arrow_forward),
+                  onPressed: _go,
+                ),
+              ),
+            ),
+            optionsViewBuilder: (context, pick, options) => Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(12),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: 360, maxWidth: box.maxWidth),
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    shrinkWrap: true,
+                    children: [
+                      for (final s in options)
+                        ListTile(
+                          dense: true,
+                          leading: Icon(s.past ? Icons.history : Icons.place_outlined),
+                          title: Text(s.shown),
+                          onTap: () => pick(s),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -994,9 +1160,9 @@ class _HomeCard extends ConsumerWidget {
             loadingBuilder: (_, child, progress) => progress == null ? child : noPhoto,
             errorBuilder: (_, _, _) => noPhoto,
           );
+    final type = homeTypeOf(h);
     final facts = [
-      if (h.beds != null) h.beds == 0 ? 'Studio' : '${h.beds} bed',
-      if (l.style.isNotEmpty) l.style,
+      if (h.beds != null && type != HomeType.studio) '${h.beds} bed',
       if (l.furnished.isNotEmpty) l.furnished,
       if (h.sqft != null) '${h.sqft} sq ft',
       if (h.km != null) miles(h.km!),
@@ -1059,6 +1225,17 @@ class _HomeCard extends ConsumerWidget {
               first ? TourTarget('search.save', child: save) : save,
               bin,
             ],
+          ),
+          Text(
+            // The site's own words when they are more exact ("End of terrace").
+            [
+              type?.label ?? 'Type not stated',
+              if (l.style.isNotEmpty &&
+                  type != null &&
+                  !type.label.toLowerCase().contains(l.style.toLowerCase()))
+                '(${l.style})',
+            ].join(' '),
+            style: t.labelLarge?.copyWith(color: type == null ? scheme.onSurfaceVariant : null),
           ),
           if (h.address.isNotEmpty)
             Row(
