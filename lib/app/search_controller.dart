@@ -346,6 +346,11 @@ class SearchController extends Notifier<SearchState> {
       throw SourceBlocked(s, url);
     }
     final read = readOpenPage(s, got.html, got.cards, rent: q.rent);
+    if (read.items.isEmpty && siteServerFailed(got.html)) {
+      throw SourceSkipped(
+        '${s.label}\'s own servers had a problem, not this app. Search again in a few minutes.',
+      );
+    }
     if (read.items.isEmpty) throw SourceBlocked(s, url);
     return (items: read.items, more: browserHasMore(s, got.html, page));
   }

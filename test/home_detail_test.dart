@@ -182,4 +182,21 @@ void main() {
     expect(cert.upgrades, 2);
     expect(EpcCertificate.fromJson(cert.toJson())?.dwelling, 'Mid-floor flat');
   });
+
+  test('the same house, and only the same house', () {
+    // Same house, written differently.
+    expect(sameHouse('14 Sample St, Leeds LS6 1AA', '14, SAMPLE STREET, LEEDS'), isTrue);
+    expect(sameHouse('Flat 2, 14 Sample Street', 'FLAT 2 14 SAMPLE STREET'), isTrue);
+    expect(sameHouse('2 14 Sample Street', 'Flat 2, 14 Sample Street'), isTrue);
+    expect(sameHouse('14a Sample Street', '14 A SAMPLE STREET'), isTrue);
+    expect(sameHouse('14 St Johns Road', '14 SAINT JOHNS ROAD'), isTrue);
+    expect(sameHouse('Rose Cottage, Sample Lane', 'ROSE COTTAGE, SAMPLE LANE, LEEDS'), isTrue);
+    // Not the same house: unsure is no.
+    expect(sameHouse('14 Sample Street', 'Flat 2, 14 Sample Street'), isFalse);
+    expect(sameHouse('Flat 2, 14 Sample Street', 'Flat 3, 14 Sample Street'), isFalse);
+    expect(sameHouse('14 Sample Street', '14A SAMPLE STREET'), isFalse);
+    expect(sameHouse('14 Sample Street', '14 OTHER ROAD'), isFalse);
+    expect(sameHouse('Sample Street, Leeds', '14 SAMPLE STREET'), isFalse);
+    expect(sameHouse('Rose Cottage', 'IVY COTTAGE'), isFalse);
+  });
 }
