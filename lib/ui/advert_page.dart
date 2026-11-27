@@ -169,8 +169,14 @@ class _AdvertPageState extends ConsumerState<AdvertPage> {
                         const Center(
                           child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()),
                         )
-                      else if (snap.hasError || d == null)
-                        _NotRead(site: _site, error: snap.error, text: l.description, onOpen: _openSite)
+                      else if (snap.hasError || d == null || d.isEmpty)
+                        _NotRead(
+                          site: _site,
+                          error: snap.error,
+                          takenDown: d?.status == 'withdrawn',
+                          text: l.description,
+                          onOpen: _openSite,
+                        )
                       else
                         AdvertSections(d, rent: q.rent, fallbackDescription: l.description),
                       if (agent.isNotEmpty)
@@ -203,9 +209,18 @@ class _AdvertPageState extends ConsumerState<AdvertPage> {
 /// The advert could not be read in the app: what the results page said, and
 /// the site's own page inside the app.
 class _NotRead extends StatelessWidget {
-  const _NotRead({required this.site, required this.error, required this.text, required this.onOpen});
+  const _NotRead({
+    required this.site,
+    required this.error,
+    required this.text,
+    required this.onOpen,
+    this.takenDown = false,
+  });
   final String site;
   final Object? error;
+
+  /// The site no longer has the advert (its page is gone).
+  final bool takenDown;
   final String text;
   final VoidCallback onOpen;
 
@@ -218,7 +233,9 @@ class _NotRead extends StatelessWidget {
         if (text.isNotEmpty) SelectableText(text),
         const SizedBox(height: 8),
         Text(
-          error is SourceBlocked
+          takenDown
+              ? '$site no longer has this advert: it may have been let, sold or taken down.'
+              : error is SourceBlocked
               ? '$site asked to check you are not a robot, so the full advert is on its page.'
               : 'The full advert could not be read here${error == null ? '' : ' (${describeError(error!)})'}.',
         ),
