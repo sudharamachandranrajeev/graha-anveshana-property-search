@@ -5,11 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/providers.dart';
 import '../db/database.dart';
+import '../domain/advert.dart';
 import '../domain/contact_links.dart';
+import '../domain/home_records.dart' show SavedRecords;
 import '../domain/pipeline.dart';
 import '../domain/price_log.dart';
 import '../domain/viewing_checklist.dart';
+import 'advert_view.dart';
 import 'browser_page.dart';
+import 'home_records_card.dart';
 import 'common.dart';
 import 'listing_map.dart';
 import 'look.dart';
@@ -67,10 +71,34 @@ class PropertyPage extends ConsumerWidget {
         .toList();
     final t = Theme.of(context).textTheme;
     final market = MarketFacts.of(p.meta);
+    final saved = SavedRecords.of(p.meta);
+    final photos = [...?saved.advert?.photos];
+    if (photos.isEmpty && p.imageUrl != null) photos.add(p.imageUrl!);
 
-    return PageScaffold(
+    // Every word on the page can be selected and copied.
+    return SelectionArea(
+      child: PageScaffold(
       title: p.address.split(',').first,
       actions: [
+        IconButton(
+          tooltip: 'Copy details',
+          icon: const Icon(Icons.copy_all_outlined),
+          onPressed: () => copyText(
+            context,
+            homeSummary(
+              address: p.address,
+              price: p.price,
+              rent: kind == PropertyKind.rent,
+              facts: [if (propertyFacts(p).isNotEmpty) propertyFacts(p)],
+              agent: agent == null ? '' : contactName(agent),
+              phone: agent?.phone ?? '',
+              email: agent?.email ?? '',
+              url: p.url,
+              advert: saved.advert,
+            ),
+            what: 'Details copied.',
+          ),
+        ),
         if (p.url.isNotEmpty)
           IconButton(
             tooltip: 'See the advert',
@@ -89,22 +117,11 @@ class PropertyPage extends ConsumerWidget {
         ),
       ],
       children: [
-        if (p.imageUrl != null)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Image.network(
-                p.imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const SizedBox(),
-              ),
-            ),
-          ),
+        if (photos.isNotEmpty) PhotoGallery(photos),
         const SizedBox(height: 16),
         Eyebrow('${kind.label} · ${Stage.of(p.stage).label(kind)}'),
         const SizedBox(height: 4),
-        Text(p.address, style: t.headlineSmall),
+        CopyLine(p.address, what: 'address', style: t.headlineSmall),
         const SizedBox(height: 12),
         FigureCard(
           eyebrow: kind == PropertyKind.rent ? 'Rent a month' : 'Price',
@@ -148,6 +165,8 @@ class PropertyPage extends ConsumerWidget {
           anchors: anchorPlaces(ref),
         ),
         const SizedBox(height: 16),
+        SavedAdvertCard(p),
+        HomeRecordsCard(p),
         SectionCard(
           title: 'Stage',
           hint: 'hunt.stage',
@@ -317,6 +336,7 @@ class PropertyPage extends ConsumerWidget {
           ],
         ),
       ],
+      ),
     );
   }
 
@@ -458,6 +478,10 @@ class PropertyPage extends ConsumerWidget {
 }
 
 /// The agent or landlord, with buttons that call or message and log it.
+/// "Name, Organisation", or the one of them that is given.
+String contactName(Contact c) =>
+    c.organisation.isNotEmpty && c.organisation != c.name ? '${c.name}, ${c.organisation}' : c.name;
+
 class _ContactCard extends ConsumerWidget {
   const _ContactCard(this.p, this.contact);
   final Property p;
@@ -468,11 +492,7 @@ class _ContactCard extends ConsumerWidget {
     final c = contact;
     final rental = PropertyKind.of(p.kind) == PropertyKind.rent;
     return SectionCard(
-      title: c == null
-          ? 'Agent or landlord'
-          : c.organisation.isNotEmpty && c.organisation != c.name
-          ? '${c.name}, ${c.organisation}'
-          : c.name,
+      title: c == null ? 'Agent or landlord' : (c.role == 'landlord' ? 'Landlord' : 'Agent'),
       trailing: TextButton(
         onPressed: () => _pick(context, ref),
         child: Text(c == null ? 'Choose' : 'Change'),
@@ -483,8 +503,9 @@ class _ContactCard extends ConsumerWidget {
           if (c == null)
             const Text('No contact yet.')
           else ...[
-            if (c.phone.isNotEmpty) Text(c.phone, style: tabular),
-            if (c.email.isNotEmpty) Text(c.email),
+            CopyLine(contactName(c), what: 'name'),
+            if (c.phone.isNotEmpty) CopyLine(c.phone, what: 'phone number', style: tabular),
+            if (c.email.isNotEmpty) CopyLine(c.email, what: 'e-mail address'),
             const SizedBox(height: 8),
             ContactButtons(c, propertyId: p.id),
           ],

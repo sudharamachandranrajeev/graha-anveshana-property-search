@@ -260,6 +260,29 @@ class Research {
     );
   }
 
+  /// Place names, or postcodes when [postcode], that start with [q], for
+  /// suggestions as the user types ("Leeds, West Yorkshire").
+  /// [name] goes into the search; [label] adds the county to tell places of
+  /// the same name apart.
+  Future<List<({String name, String label})>> placesLike(String q, {bool postcode = false}) async {
+    final body = await _get(
+      postcode
+          ? Uri(scheme: 'https', host: 'api.postcodes.io', pathSegments: ['postcodes', q.trim(), 'autocomplete'])
+          : Uri.https('api.postcodes.io', '/places', {'q': q.trim(), 'limit': '20'}),
+    );
+    final result = (body as Map?)?['result'];
+    if (result is! List) return const [];
+    if (postcode) return [for (final p in result) (name: '$p', label: '$p')];
+    final seen = <String>{};
+    return [
+      for (final p in result)
+        if (p is Map && '${p['name_1'] ?? ''}'.toLowerCase().startsWith(q.trim().toLowerCase()))
+          if ([p['name_1'], p['county_unitary'] ?? p['region']].whereType<String>().where((s) => s.isNotEmpty).join(', ')
+              case final label when seen.add(label))
+            (name: '${p['name_1']}', label: label),
+    ];
+  }
+
   /// Where a full postcode, a postcode district ("LS6") or a place name
   /// ("Pontefract") is, or null when postcodes.io does not know it.
   Future<({double lat, double lon, String label})?> whereIs(String query) async {

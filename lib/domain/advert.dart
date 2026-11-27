@@ -17,11 +17,108 @@ class AdvertDetails {
     this.facts = const {},
     this.agent = '',
     this.phone = '',
+    this.price,
+    this.status = '',
   });
+
+  /// The site says the advert is gone (removed, or the page no longer
+  /// exists): nothing else is known.
+  static const takenDown = AdvertDetails(status: 'withdrawn');
+
   final String description;
   final List<String> photos, floorplans, features;
   final Map<String, String> facts;
   final String agent, phone;
+
+  /// The price on the advert page (monthly for a rental), when the page
+  /// gives it.
+  final int? price;
+
+  /// The advert's status key as on Listing (toLet, letAgreed, saleAgreed,
+  /// withdrawn...); empty when the page does not say.
+  final String status;
+
+  /// Nothing to show: no description, photos or facts.
+  bool get isEmpty => description.isEmpty && photos.isEmpty && facts.isEmpty && features.isEmpty;
+
+  Map<String, Object?> toJson() => {
+    if (description.isNotEmpty) 'description': description,
+    if (photos.isNotEmpty) 'photos': photos,
+    if (floorplans.isNotEmpty) 'floorplans': floorplans,
+    if (features.isNotEmpty) 'features': features,
+    if (facts.isNotEmpty) 'facts': facts,
+    if (agent.isNotEmpty) 'agent': agent,
+    if (phone.isNotEmpty) 'phone': phone,
+  };
+
+  /// The advert kept in a saved home's meta; null when there is none.
+  static AdvertDetails? fromJson(Object? j) {
+    if (j is! Map) return null;
+    List<String> list(String k) => [for (final x in (j[k] as List?) ?? const []) '$x'];
+    return AdvertDetails(
+      description: '${j['description'] ?? ''}',
+      photos: list('photos'),
+      floorplans: list('floorplans'),
+      features: list('features'),
+      facts: {for (final MapEntry(:key, :value) in ((j['facts'] as Map?) ?? const {}).entries) '$key': '$value'},
+      agent: '${j['agent'] ?? ''}',
+      phone: '${j['phone'] ?? ''}',
+    );
+  }
+}
+
+/// A home written out to paste into a message or a note: address, price,
+/// facts, agent, the advert's details and the link.
+String homeSummary({
+  required String address,
+  int? price,
+  required bool rent,
+  List<String> facts = const [],
+  String agent = '',
+  String phone = '',
+  String email = '',
+  String url = '',
+  AdvertDetails? advert,
+}) {
+  String money(int n) => '£${n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+$)'), (_) => ',')}';
+  return [
+    address,
+    if (price != null) '${money(price)}${rent ? ' a month' : ''}',
+    if (facts.isNotEmpty) facts.join(' · '),
+    if (advert != null) ...[
+      for (final e in advert.facts.entries) '${e.key}: ${e.value}',
+      if (advert.features.isNotEmpty) ['', 'Key features', for (final f in advert.features) '• $f'].join('\n'),
+    ],
+    if (agent.isNotEmpty || phone.isNotEmpty || email.isNotEmpty)
+      ['', 'Agent: ${[agent, phone, email].where((s) => s.isNotEmpty).join(', ')}'].join('\n'),
+    if (url.isNotEmpty) ['', url].join('\n'),
+  ].join('\n');
+}
+
+/// The advert's status from the words a site shows on it ("Let agreed",
+/// "Sold STC"...); empty when none.
+String advertStatusIn(String text) {
+  final t = text.toLowerCase();
+  if (RegExp(r'\blet agreed\b|\blet_agreed\b|has been let\b').hasMatch(t)) return 'letAgreed';
+  if (RegExp(r'sold stc|sold_stc|under offer|under_offer|sale agreed').hasMatch(t)) return 'saleAgreed';
+  if (RegExp(r'no longer (?:available|on the market)|has been removed').hasMatch(t)) {
+    return 'withdrawn';
+  }
+  return '';
+}
+
+int? _price(Object? o) => switch (o) {
+  num n => n.round(),
+  String s when RegExp(r'\d').hasMatch(s) => _monthlyFrom(s),
+  _ => null,
+};
+
+/// "£1,200 pcm" or "£300 pw" as a monthly (or one-off) price.
+int? _monthlyFrom(String s) {
+  final m = RegExp(r'£\s?([\d,]+)').firstMatch(s);
+  final n = m == null ? null : int.tryParse(m.group(1)!.replaceAll(',', ''));
+  if (n == null) return null;
+  return RegExp(r'\bpw\b|per week|a week', caseSensitive: false).hasMatch(s) ? (n * 52 / 12).round() : n;
 }
 
 /// Plain text from an advert's HTML description.
@@ -137,6 +234,10 @@ AdvertDetails parseRightmoveAdvert(String html) {
     },
     agent: _s(_at(p, ['customer', 'branchDisplayName'])),
     phone: _s(_at(p, ['contactInfo', 'telephoneNumbers', 'localNumber'])),
+    price: _price(_at(p, ['prices', 'primaryPrice'])),
+    status: _at(p, ['status', 'archived']) == true || _at(p, ['status', 'published']) == false
+        ? 'withdrawn'
+        : advertStatusIn([...?(p['tags'] as List?)?.map(_s), _s(p['displayStatus'])].join(' ')),
   );
 }
 
@@ -172,6 +273,8 @@ AdvertDetails parseOnTheMarketAdvert(String html) {
     facts: facts,
     agent: _s(_at(p, ['agent', 'name'])),
     phone: _s(_at(p, ['agent', 'telephone'])),
+    price: _price(p['price']),
+    status: advertStatusIn('${_s(p['displayStatus'])} ${_s(p['status'])}'),
   );
 }
 
@@ -200,6 +303,8 @@ AdvertDetails parsePropertyPalAdvert(String html) {
     },
     agent: l.agent,
     phone: l.agentPhone,
+    price: l.price,
+    status: l.status,
   );
 }
 
@@ -253,8 +358,18 @@ AdvertDetails parseOpenRentAdvert(String html) {
     photos: photos,
     facts: facts,
     agent: 'Private landlord (OpenRent)',
+    price: _price(facts['Rent PCM'] ?? facts['Rent']),
+    status: advertStatusIn(_pageHeading(html)),
   );
 }
+
+/// The page's title and main heading, where sites put "Let Agreed" or
+/// "no longer available"; the description is left out so its wording
+/// cannot be taken for the advert's status.
+String _pageHeading(String html) => [
+  for (final m in RegExp(r'<(title|h1)[^>]*>([\s\S]{0,300}?)</\1>', caseSensitive: false).allMatches(html))
+    plainText(m.group(2)!),
+].join(' ');
 
 /// Reads [l]'s advert page for its full details. Null for sites read only
 /// in the browser (Zoopla, Facebook) and adverts with no page.
@@ -267,6 +382,7 @@ Future<AdvertDetails?> readAdvert(http.Client client, Listing l) async {
       .get(url, headers: {'user-agent': userAgent, 'accept': 'text/html'})
       .timeout(const Duration(seconds: 30));
   if (r.statusCode == 403 || r.statusCode == 429) throw SourceBlocked(source, url);
+  if (r.statusCode == 404 || r.statusCode == 410) return AdvertDetails.takenDown;
   if (r.statusCode != 200) throw FormatException('${source.label} answered with error ${r.statusCode}.');
   return switch (source) {
     SourceId.rightmove => parseRightmoveAdvert(r.body),

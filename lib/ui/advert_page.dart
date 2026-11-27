@@ -4,15 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/search_controller.dart';
 import '../domain/advert.dart';
-import '../domain/leasehold.dart';
 import '../domain/listing.dart';
 import '../domain/property_search.dart';
 import '../domain/search_request.dart';
 import '../domain/sources.dart';
+import 'advert_view.dart';
 import 'browser_page.dart';
 import 'common.dart';
 import 'listing_map.dart';
-import 'look.dart';
 import 'search_page.dart';
 
 /// A home from the search, shown in full inside the app: every photo, the
@@ -46,6 +45,33 @@ class _AdvertPageState extends ConsumerState<AdvertPage> {
     return PageScaffold(
       title: l.address.split(',').first,
       actions: [
+        IconButton(
+          tooltip: 'Copy details',
+          icon: const Icon(Icons.copy_all_outlined),
+          onPressed: () async {
+            final d = await _details.catchError((_) => null);
+            if (!context.mounted) return;
+            await copyText(
+              context,
+              homeSummary(
+                address: l.address,
+                price: h.price,
+                rent: q.rent,
+                facts: [
+                  if (h.beds != null) h.beds == 0 ? 'Studio' : '${h.beds} bed',
+                  if (l.baths != null) '${l.baths} bath',
+                  if (l.style.isNotEmpty) l.style,
+                  if (l.furnished.isNotEmpty) l.furnished,
+                ],
+                agent: (d?.agent.isNotEmpty ?? false) ? d!.agent : l.agent,
+                phone: (d?.phone.isNotEmpty ?? false) ? d!.phone : l.agentPhone,
+                url: l.url,
+                advert: d,
+              ),
+              what: 'Details copied.',
+            );
+          },
+        ),
         IconButton(tooltip: 'See it on $_site', icon: const Icon(Icons.language), onPressed: _openSite),
       ],
       body: FutureBuilder<AdvertDetails?>(
@@ -61,20 +87,21 @@ class _AdvertPageState extends ConsumerState<AdvertPage> {
           ].join(' · ');
           final phone = (d?.phone.isNotEmpty ?? false) ? d!.phone : l.agentPhone;
           final agent = (d?.agent.isNotEmpty ?? false) ? d!.agent : l.agent;
-          return ListView(
+          return SelectionArea(
+            child: ListView(
             padding: EdgeInsets.fromLTRB(16, 8, 16, 96 + MediaQuery.paddingOf(context).bottom),
             children: [
               Readable(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (photos.isNotEmpty) _Gallery(photos),
+                    if (photos.isNotEmpty) PhotoGallery(photos),
                     const SizedBox(height: 12),
                     Text(
                       h.price == null ? 'Price not shown' : '${gbp(h.price!)}${q.rent ? ' a month' : ''}',
                       style: t.headlineSmall,
                     ),
-                    Text(l.address, style: t.titleMedium),
+                    CopyLine(l.address, what: 'address', style: t.titleMedium),
                     if (facts.isNotEmpty) Text(facts),
                     if (h.km != null)
                       Text('${miles(h.km!)} from ${ref.read(searchProvider).centre?.label ?? 'the centre'}'),
@@ -142,45 +169,18 @@ class _AdvertPageState extends ConsumerState<AdvertPage> {
                       )
                     else if (snap.hasError || d == null)
                       _NotRead(site: _site, error: snap.error, text: l.description, onOpen: _openSite)
-                    else ...[
-                      if (d.features.isNotEmpty)
-                        SectionCard(
-                          title: 'Key features',
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [for (final f in d.features) Text('• $f')],
-                          ),
-                        ),
-                      if (d.facts.isNotEmpty)
-                        SectionCard(
-                          title: 'Details',
-                          child: Column(
-                            children: [for (final e in d.facts.entries) FigureRow(e.key, e.value)],
-                          ),
-                        ),
-                      if (!q.rent) LeaseholdCard(readLeasehold(d, thisYear: DateTime.now().year)),
-                      SectionCard(
-                        title: 'Description',
-                        child: SelectableText(d.description.isEmpty ? l.description : d.description),
-                      ),
-                      if (d.floorplans.isNotEmpty)
-                        SectionCard(
-                          title: 'Floor plans',
-                          child: Column(
-                            children: [
-                              for (final f in d.floorplans)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 8),
-                                  child: Image.network(f, errorBuilder: (_, _, _) => const SizedBox()),
-                                ),
-                            ],
-                          ),
-                        ),
-                    ],
+                    else
+                      AdvertSections(d, rent: q.rent, fallbackDescription: l.description),
                     if (agent.isNotEmpty)
                       SectionCard(
                         title: 'Agent',
-                        child: Text([agent, if (phone.isNotEmpty) phone].join('\n')),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CopyLine(agent, what: 'agent'),
+                            if (phone.isNotEmpty) CopyLine(phone, what: 'phone number', style: tabular),
+                          ],
+                        ),
                       ),
                     Text(
                       'From $_site. Check the details with the agent before you commit.',
@@ -190,6 +190,7 @@ class _AdvertPageState extends ConsumerState<AdvertPage> {
                 ),
               ),
             ],
+            ),
           );
         },
       ),
@@ -228,122 +229,4 @@ class _NotRead extends StatelessWidget {
       ],
     ),
   );
-}
-
-/// The advert's photos, one at a time.
-class _Gallery extends StatefulWidget {
-  const _Gallery(this.photos);
-  final List<String> photos;
-
-  @override
-  State<_Gallery> createState() => _GalleryState();
-}
-
-class _GalleryState extends State<_Gallery> {
-  final _pages = PageController();
-  var _at = 0;
-
-  @override
-  void dispose() {
-    _pages.dispose();
-    super.dispose();
-  }
-
-  void _go(int i) =>
-      _pages.animateToPage(i, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
-
-  @override
-  Widget build(BuildContext context) {
-    final n = widget.photos.length;
-    final scheme = Theme.of(context).colorScheme;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: AspectRatio(
-        aspectRatio: 16 / 10,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            PageView.builder(
-              controller: _pages,
-              itemCount: n,
-              onPageChanged: (i) => setState(() => _at = i),
-              itemBuilder: (_, i) => Image.network(
-                widget.photos[i],
-                fit: BoxFit.cover,
-                semanticLabel: 'Photo ${i + 1} of $n',
-                errorBuilder: (_, _, _) => ColoredBox(color: scheme.surfaceContainerHighest),
-              ),
-            ),
-            if (n > 1) ...[
-              Align(
-                alignment: Alignment.centerLeft,
-                child: IconButton.filledTonal(
-                  tooltip: 'Previous photo',
-                  icon: const Icon(Icons.chevron_left),
-                  onPressed: _at == 0 ? null : () => _go(_at - 1),
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: IconButton.filledTonal(
-                  tooltip: 'Next photo',
-                  icon: const Icon(Icons.chevron_right),
-                  onPressed: _at == n - 1 ? null : () => _go(_at + 1),
-                ),
-              ),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Padding(padding: const EdgeInsets.all(8), child: Capsule('${_at + 1} / $n')),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A leasehold home's yearly costs on top of the mortgage, and what the
-/// advert leaves out. Nothing for a freehold home.
-class LeaseholdCard extends StatelessWidget {
-  const LeaseholdCard(this.lease, {super.key});
-  final LeaseholdCosts lease;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!lease.leasehold) return const SizedBox.shrink();
-    final t = Theme.of(context).textTheme;
-    final monthly = lease.monthly;
-    return SectionCard(
-      title: 'Leasehold costs',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          FigureRow('Tenure', lease.tenure.isEmpty ? 'Share of freehold' : lease.tenure),
-          if (lease.serviceChargeYear != null)
-            FigureRow('Service charge', '${gbp(lease.serviceChargeYear!)} a year'),
-          if (lease.groundRentYear != null)
-            FigureRow(
-              'Ground rent',
-              lease.groundRentYear == 0 ? 'None (peppercorn)' : '${gbp(lease.groundRentYear!)} a year',
-            ),
-          if (lease.yearsLeft != null) FigureRow('Lease', '${lease.yearsLeft} years left'),
-          if (monthly != null) FigureRow('On top of the mortgage', '${gbp(monthly)} a month'),
-          if (lease.missing.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            StatusLabel(
-              Status.warning,
-              'The advert does not give the ${lease.missing.join(', ')}. Ask the agent.',
-            ),
-          ],
-          for (final w in lease.warnings) ...[const SizedBox(height: 8), StatusLabel(Status.warning, w)],
-          const SizedBox(height: 8),
-          Text(
-            'From the advert. Charges can rise; your solicitor checks the lease itself.',
-            style: t.bodySmall,
-          ),
-        ],
-      ),
-    );
-  }
 }

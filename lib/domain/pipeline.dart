@@ -70,6 +70,7 @@ String listingStatusLabel(String key) => switch (key) {
   'forSale' => 'For sale',
   'saleAgreed' => 'Sale agreed',
   'sold' => 'Sold',
+  'withdrawn' => 'Advert taken down',
   '' => '',
   _ => key,
 };
