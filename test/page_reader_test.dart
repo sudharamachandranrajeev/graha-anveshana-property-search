@@ -35,4 +35,16 @@ void main() {
     expect(readOpenPage(SourceId.zoopla, '<html></html>', cards, rent: true).items, hasLength(2));
     expect(readOpenPage(SourceId.rightmove, '<html></html>', 'not json', rent: true).items, isEmpty);
   });
+
+  test('a site server error is told apart from a robot check', () {
+    expect(
+      siteServerFailed(
+        '<html><body>upstream connect error or disconnect/reset before headers. '
+        'reset reason: connection termination</body></html>',
+      ),
+      isTrue,
+    );
+    expect(siteServerFailed('<html><title>502 Bad Gateway</title></html>'), isTrue);
+    expect(siteServerFailed('<html><title>Just a moment...</title></html>'), isFalse);
+  });
 }

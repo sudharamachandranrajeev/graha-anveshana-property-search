@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.1
+
+- **Home records find the house by themselves.** Past sales and the energy certificate are matched
+  to the home's address (house number, flat and street), so the list to pick from shows only when
+  the address is unclear.
+- **Zoopla server errors are named.** When Zoopla's own servers fail, Search says so and asks you
+  to try again in a few minutes, instead of offering a page that only shows the error.
+
 ## 0.15.0
 
 A fuller page for every saved home, a safety score, and quicker Search.

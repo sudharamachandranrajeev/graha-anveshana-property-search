@@ -8,6 +8,18 @@ import 'sources.dart';
 /// when the user searches, or a page the user opened in the in-app browser
 /// after a site asked for a robot check or a sign-in.
 
+/// The site's own servers failed, rather than asking for a robot check:
+/// the short error page a proxy sends (Zoopla's says "upstream connect
+/// error or disconnect/reset before headers"). Trying again later helps;
+/// opening the page does not.
+bool siteServerFailed(String html) =>
+    html.length < 4000 &&
+    RegExp(
+      r'upstream connect error|reset before headers|no healthy upstream|'
+      r'\b50[234] (?:Bad Gateway|Service (?:Temporarily )?Unavailable|Gateway Time-?out)',
+      caseSensitive: false,
+    ).hasMatch(html);
+
 /// Script run in the page: every advert card with its link, text and
 /// picture. A card is the nearest box around an advert link that shows a
 /// price, so it works on any site laid out as a list of cards.

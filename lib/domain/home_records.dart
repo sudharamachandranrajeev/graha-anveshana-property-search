@@ -248,9 +248,57 @@ class SavedRecords {
 /// Whether [record]'s address (from the EPC register or Land Registry) is
 /// the same house as [home]'s (as the advert or the user wrote it). Both
 /// are in the same postcode already.
+///
+/// Unsure means no: a wrong "no" costs the user one pick from the list, a
+/// wrong "yes" shows another home's records. So the house number (or name
+/// when there is none), the flat and the street must all agree.
 bool sameHouse(String home, String record) {
-  // TODO(human)
-  return false;
+  final a = _HouseKey.of(home), b = _HouseKey.of(record);
+  if (a == null || b == null) return false;
+  return a.flat == b.flat &&
+      a.house == b.house &&
+      (a.street == null || b.street == null || a.street == b.street);
+}
+
+/// What identifies a house in an address: "Flat 2, 14A Sample St, Leeds"
+/// gives flat 2, house 14A, street SAMPLE.
+class _HouseKey {
+  const _HouseKey(this.flat, this.house, this.street);
+  final String? flat;
+
+  /// The number ("14A") or, without one, the name ("ROSE COTTAGE").
+  final String house;
+
+  /// The first word of the street after the number; null when the
+  /// address names no street there.
+  final String? street;
+
+  static final _flat = RegExp(r'\b(?:FLAT|APARTMENT|APT|UNIT|MAISONETTE)\s+([0-9]+[A-Z]?|[A-Z])\b');
+  static final _number = RegExp(r'^[0-9]+[A-Z]?$');
+  static const _noise = {'THE', 'FLAT', 'APARTMENT', 'APT', 'UNIT', 'MAISONETTE'};
+
+  static _HouseKey? of(String address) {
+    // "14 a" and "14-16" are written many ways; letters next to a number join it.
+    var s = address.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]+'), ' ').trim();
+    s = s.replaceAllMapped(RegExp(r'\b([0-9]+) ([A-Z])\b(?= [A-Z]{2,})'), (m) => '${m[1]}${m[2]}');
+    final flat = _flat.firstMatch(s)?.group(1);
+    if (flat != null) s = s.replaceFirst(_flat, ' ').trim();
+    final words = s.split(' ').where((w) => w.isNotEmpty).toList();
+    final i = words.indexWhere(_number.hasMatch);
+    String? streetAt(int k) =>
+        k >= words.length || _number.hasMatch(words[k]) ? null : (words[k] == 'ST' ? 'SAINT' : words[k]);
+    if (i >= 0) {
+      // "2 14 Sample Street": a bare number before the house number is a flat.
+      if (flat == null && i + 2 < words.length && _number.hasMatch(words[i + 1]) && streetAt(i + 2) != null) {
+        return _HouseKey(words[i], words[i + 1], streetAt(i + 2));
+      }
+      return _HouseKey(flat, words[i], streetAt(i + 1));
+    }
+    // No number: the house is known by its name, the words before the first comma.
+    final first = address.split(',').first.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]+'), ' ').trim();
+    final name = first.split(' ').where((w) => w.isNotEmpty && !_noise.contains(w)).join(' ');
+    return name.length < 3 ? null : _HouseKey(flat, name, null);
+  }
 }
 
 /// [sales] in a postcode that are this house, newest first.
