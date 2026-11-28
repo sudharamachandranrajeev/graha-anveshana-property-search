@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.17.0
+
+- **Told about new versions at start.** When a new version is out, the app says so in a window
+  the next time it starts, with what is new and an **Update** button that downloads, checks and
+  installs it. Each version is offered once; the banner at the top stays as a reminder. It asks
+  GitHub fresh at every start, so a release is seen the same day. Turn it off in **Sentinel**
+  with the updates switch.
+- **A new look: Udyoga.** The look of the Udyoga app: a soft azure sky (deep navy at night),
+  white cards with rounded corners and soft shadows, Plus Jakarta Sans headings, an ink bar with
+  an azure pill, pages that rise into place, home cards that tilt towards the pointer and agents
+  shown with a coloured monogram. Choose it in **Settings → Look**.
+
 ## 0.16.0
 
 - **A new look: Molten.** Choose it in **Settings → Look**. Cards become grey stone with

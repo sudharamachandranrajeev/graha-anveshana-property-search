@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:anveshana/domain/book.dart';
 import 'package:anveshana/ui/molten.dart';
 import 'package:anveshana/ui/molten_theme.dart';
+import 'package:anveshana/ui/udyoga_look.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -56,6 +57,25 @@ void main() {
     await app.go('Settings');
     await app.tap(find.text('Instrument').last);
     expect(molten(), isFalse);
+    await app.close();
+  });
+
+  testWidgets('Settings switches to the Udyoga look and back', (tester) async {
+    bool udyoga() => Theme.of(tester.element(find.byType(Scaffold).first)).extension<Udyoga>() != null;
+    final app = AppHarness(tester)..desktop();
+    await app.open();
+    await app.run();
+    await app.go('Settings');
+    await app.tap(find.text('Udyoga').last);
+    expect(udyoga(), isTrue);
+    expect(await tester.runAsync(() => app.book.pref<String>(PrefKeys.look, '')), 'udyoga');
+    for (final page in ['Dashboard', 'Search', 'Shortlist', 'Contacts', 'Lettings']) {
+      await app.go(page);
+      expect(tester.takeException(), isNull);
+    }
+    await app.go('Settings');
+    await app.tap(find.text('Instrument').last);
+    expect(udyoga(), isFalse);
     await app.close();
   });
 

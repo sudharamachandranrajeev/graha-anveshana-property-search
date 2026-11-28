@@ -4,6 +4,7 @@ import 'package:brahma_core/brahma_core.dart';
 import 'package:flutter/material.dart';
 
 import 'molten.dart';
+import 'udyoga_look.dart';
 
 // The Anveshana look, shared by Graha and Vahana Anveshana (keep the two
 // copies in step): an instrument panel. A charcoal canvas crossed by faint
@@ -57,8 +58,31 @@ class Tones {
     accent: Forge.roseBright,
   );
 
-  static Tones of(BuildContext context) =>
-      Molten.on(context) ? _molten : (Theme.of(context).brightness == Brightness.dark ? _dark : _light);
+  static const _udyogaLight = Tones._(
+    top: Color(0xFFDDE8FF),
+    bottom: Color(0xFFF7F9FD),
+    line: Color(0x00000000),
+    hairline: Color(0xFFE6ECF7),
+    muted: Color(0xFF5E6A85),
+    track: Color(0xFFDCE3F0),
+    accent: azure,
+  );
+  static const _udyogaDark = Tones._(
+    top: Color(0xFF0A1022),
+    bottom: Color(0xFF05070F),
+    line: Color(0x00000000),
+    hairline: Color(0x12FFFFFF),
+    muted: Color(0xFF9AA4BD),
+    track: Color(0xFF1A2440),
+    accent: Color(0xFF6E9BFF),
+  );
+
+  static Tones of(BuildContext context) {
+    if (Molten.on(context)) return _molten;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    if (Udyoga.on(context)) return dark ? _udyogaDark : _udyogaLight;
+    return dark ? _dark : _light;
+  }
 
   /// The canvas, top to bottom, and the contour lines drawn on it.
   final Color top, bottom, line;
@@ -66,7 +90,8 @@ class Tones {
   /// Card edges, secondary text and empty bar tracks.
   final Color hairline, muted, track;
 
-  /// What marks the best or the chosen: lime, or rose gold under Molten.
+  /// What marks the best or the chosen: lime, rose gold under Molten, azure
+  /// under Udyoga.
   final Color accent;
 }
 
@@ -319,6 +344,7 @@ class Backdrop extends StatelessWidget {
     if (Molten.on(context)) {
       return CustomPaint(painter: const MoltenCanvasPainter(), child: child);
     }
+    if (Udyoga.on(context)) return UdyogaCanvas(child: child);
     final tones = Tones.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -449,7 +475,9 @@ class FigureCard extends StatelessWidget {
                             ?.merge(tabular)
                             .copyWith(
                               color: accent
-                                  ? (molten ? Forge.roseBright : (dark ? lime : const Color(0xFF4F6300)))
+                                  ? (molten || Udyoga.on(context)
+                                        ? Tones.of(context).accent
+                                        : (dark ? lime : const Color(0xFF4F6300)))
                                   : null,
                               height: 1.05,
                             ),
@@ -569,8 +597,8 @@ class ScoreRow extends StatelessWidget {
   }
 }
 
-/// The edge of the card holding the best of a list: lime-tinted, or
-/// Molten's raised slab with its glowing rim.
+/// The edge of the card holding the best of a list: lime-tinted, Molten's
+/// raised slab with its glowing rim, or an azure edge under Udyoga.
 ShapeBorder bestShape(BuildContext context) {
   if (Molten.on(context)) {
     return const StoneBorder(
@@ -581,6 +609,12 @@ ShapeBorder bestShape(BuildContext context) {
     );
   }
   final dark = Theme.of(context).brightness == Brightness.dark;
+  if (Udyoga.on(context)) {
+    return RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(22),
+      side: BorderSide(color: udyogaAccent(Theme.of(context).brightness).withValues(alpha: 0.6), width: 1.5),
+    );
+  }
   return RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(18),
     side: BorderSide(color: dark ? lime.withValues(alpha: 0.35) : Tones.of(context).hairline),

@@ -105,10 +105,13 @@ not advice.
   works in every Brahma app.
 - 🎨 **Easy to read** – big clear figures, light and dark themes, and a hint beside every
   control.
-- 🌋 **Two looks** – the usual clean **Instrument** look, or **Molten**: grey stone with glowing
-  rose-gold edges, cracks and molten drips. A home's stage shows as beads on a chain, photos turn
-  with PREV and NEXT pebbles, and an empty page shows an astronaut on the moon. Pick one in
-  **Settings → Look**.
+- 🌋 **Three looks** – the usual clean **Instrument** look; **Molten**, grey stone with glowing
+  rose-gold edges, cracks and molten drips (a home's stage shows as beads on a chain, photos turn
+  with PREV and NEXT pebbles, an empty page shows an astronaut on the moon); or **Udyoga**, the
+  soft azure look of the Udyoga app, light or dark, with cards that tilt towards the pointer.
+  Pick one in **Settings → Look**.
+- 🔔 **Told when there is a new version** – when an update comes out, the app says so the next
+  time it starts, shows what is new, and installs it when you tap **Update**.
 
 <details>
 <summary>Full list of what the sums and reports cover</summary>
@@ -258,8 +261,9 @@ walks you through it. **Write down the recovery key** it shows and keep it safe.
 
 ## ⬆️ Updating
 
-Update from inside the app. When a new version is out, a banner says so at start-up. Tap
-**Update**, or go to **Settings → About → Check for updates**. The app downloads the new version,
+Update from inside the app. When a new version is out, a window says so the next time the app
+starts, with what is new. Tap **Update**. If you tap **Close**, a banner at the top keeps the
+reminder. You can also go to **Settings → About → Check for updates**. The app downloads the new version,
 checks it against the release's checksums and installs it. Your data is kept. See
 [How do I update?](#-faq-and-troubleshooting) in the FAQ for each device.
 
@@ -316,8 +320,9 @@ area reports and alerts need the internet.
 <details>
 <summary><b>How do I change the look?</b></summary>
 
-Open **Settings**, find **Look** and tap **Molten** or **Instrument**. The app changes at once.
-The choice syncs to your other devices if you use sync. Molten is always dark.
+Open **Settings**, find **Look** and tap **Instrument**, **Molten** or **Udyoga**. The app
+changes at once. The choice syncs to your other devices if you use sync. Molten is always dark;
+the other two follow your device's light or dark setting.
 </details>
 
 <details>
@@ -476,6 +481,8 @@ scripts/make-icons.sh                                                 # app icon
 - [http](https://pub.dev/packages/http), [intl](https://pub.dev/packages/intl),
   [url_launcher](https://pub.dev/packages/url_launcher)
 - [Inter](https://rsms.me/inter/) font (SIL Open Font License, `assets/fonts/Inter-OFL.txt`)
+- [Plus Jakarta Sans](https://github.com/tokotype/PlusJakartaSans) font for the Udyoga look (SIL Open
+  Font License, `assets/fonts/PlusJakartaSans-OFL.txt`)
 - [ntfy](https://ntfy.sh) for Brahma Watch alerts
 - Open data: [UK House Price Index](https://www.gov.uk/government/collections/uk-house-price-index-reports),
   [police.uk](https://data.police.uk),

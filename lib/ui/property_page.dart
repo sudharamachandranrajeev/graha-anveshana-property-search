@@ -24,6 +24,7 @@ import 'price_check_card.dart';
 import 'research_page.dart';
 import 'viewing_plan_page.dart';
 import 'molten.dart';
+import 'udyoga_look.dart';
 
 const channelLabels = {
   'call': 'Call',
@@ -548,10 +549,10 @@ class _ContactCard extends ConsumerWidget {
           if (c == null)
             const Text('No contact yet.')
           else ...[
-            if (Molten.on(context))
+            if (Molten.on(context) || Udyoga.on(context))
               Row(
                 children: [
-                  SwirlAvatar(contactName(c)),
+                  if (Molten.on(context)) SwirlAvatar(contactName(c)) else OrgLogo(contactName(c)),
                   const SizedBox(width: 12),
                   Expanded(child: CopyLine(contactName(c), what: 'name')),
                 ],

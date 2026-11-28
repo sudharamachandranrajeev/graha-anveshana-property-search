@@ -1,7 +1,7 @@
 name: anveshana
 description: "Graha Anveshana - property search, renting, buying, investment, development and lettings (Linux, Windows, Android). Part of Brahma."
 publish_to: 'none'
-version: 0.16.0+26
+version: 0.17.0+27
 
 environment:
   sdk: ^3.13.5
@@ -56,6 +56,16 @@ flutter:
           weight: 600
         - asset: assets/fonts/Inter-Bold.ttf
           weight: 700
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/PlusJakartaSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/PlusJakartaSans-ExtraBold.ttf
+          weight: 800
 
 # Bundle SQLite3MultipleCiphers instead of plain SQLite so the local database
 # is encrypted at rest on every platform (see doc/hook.md in package:sqlite3).
