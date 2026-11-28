@@ -9,6 +9,7 @@ import '../domain/price_check.dart';
 import '../domain/research.dart';
 import 'common.dart';
 import 'look.dart';
+import 'molten.dart';
 
 /// Is the rent or price fair? Compares an advert with open data for its
 /// postcode, and for lets lists the most a tenant can be asked to pay up front.
@@ -105,7 +106,7 @@ class _PriceCheckCardState extends ConsumerState<PriceCheckCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (busy) const LinearProgressIndicator(),
+            if (busy) const LoadingBar(),
             if (lines == null && !busy)
               Text(
                 rent

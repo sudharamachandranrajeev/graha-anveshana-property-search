@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.16.0
+
+- **A new look: Molten.** Choose it in **Settings → Look**. Cards become grey stone with
+  rose-gold rims; buttons glow, crack when held and dim when unavailable; dialogs drip and smoke;
+  the price slider is a groove of molten stone; tooltips carry a drop. A home's stage is a chain
+  of beads you can tap, with a trail above the address; photos turn with PREV and NEXT pebbles;
+  agents get a swirl avatar; new homes get a NEW tag; the Dashboard's weekly chart drips;
+  loading shows a turning swirl, molten bars and grey rows; empty pages show an astronaut on
+  the moon. Everything is drawn by the app, so it stays sharp at any size.
+- The usual look is unchanged and stays the default.
+
 ## 0.15.1
 
 - **Home records find the house by themselves.** Past sales and the energy certificate are matched

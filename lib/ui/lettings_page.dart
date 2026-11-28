@@ -12,6 +12,7 @@ import 'common.dart';
 import 'look.dart';
 import 'hunt_page.dart';
 import 'property_page.dart';
+import 'molten.dart';
 
 class LettingsPage extends ConsumerWidget {
   const LettingsPage({super.key});
@@ -104,7 +105,7 @@ class LettingsPage extends ConsumerWidget {
         AsyncView(
           ref.watch(tenanciesProvider),
           builder: (tenancies) => tenancies.isEmpty
-              ? const EmptyState(
+              ? const EmptyNote(
                   icon: Icons.assignment_outlined,
                   title: 'No tenancies',
                   message: 'Add a tenancy for a home you let out, or for the home you rent.',

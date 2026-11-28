@@ -13,6 +13,7 @@ import 'common.dart';
 import 'homes_map.dart';
 import 'look.dart';
 import 'property_page.dart';
+import 'molten.dart';
 
 /// "Your hunt so far": what the user has searched, saved, asked and seen,
 /// worked out from the data on this device. Nothing is sent anywhere.
@@ -94,7 +95,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 const SizedBox(height: 12),
                 _Plan(kind: kind, goal: goal, lastBudget: lastBudget, pace: s.pace, all: goals),
                 if (s.isEmpty && history.isEmpty)
-                  EmptyState(
+                  EmptyNote(
                     icon: Icons.space_dashboard_outlined,
                     title: 'Your hunt shows here',
                     message:
@@ -608,30 +609,54 @@ class _WeekBars extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 6),
-            SizedBox(
-              height: 44,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
+            if (Molten.on(context))
+              // Molten draws the weeks as a dripping line; the boxes on top
+              // keep each week's tooltip.
+              Stack(
                 children: [
-                  for (final (i, (start, n)) in weeks.indexed)
-                    Expanded(
-                      child: Tooltip(
-                        message: 'Week of ${day.format(start)}: $n',
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 2),
-                          child: Container(
-                            height: top == 0 ? 3 : 3 + 41 * n / top,
-                            decoration: BoxDecoration(
-                              color: n == 0 ? tones.track : (i == weeks.length - 1 ? lime : tones.muted),
-                              borderRadius: BorderRadius.circular(3),
+                  DripLineChart([for (final w in weeks) w.$2]),
+                  Positioned.fill(
+                    child: Row(
+                      children: [
+                        for (final (start, n) in weeks)
+                          Expanded(
+                            child: Tooltip(
+                              message: 'Week of ${day.format(start)}: $n',
+                              child: const SizedBox.expand(),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+            else
+              SizedBox(
+                height: 44,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    for (final (i, (start, n)) in weeks.indexed)
+                      Expanded(
+                        child: Tooltip(
+                          message: 'Week of ${day.format(start)}: $n',
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: Container(
+                              height: top == 0 ? 3 : 3 + 41 * n / top,
+                              decoration: BoxDecoration(
+                                color: n == 0
+                                    ? tones.track
+                                    : (i == weeks.length - 1 ? tones.accent : tones.muted),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
             const SizedBox(height: 4),
             Row(
               children: [
@@ -678,7 +703,7 @@ class _BinRow extends StatelessWidget {
                       Container(
                         height: 10,
                         width: box.maxWidth * share.clamp(0, 1),
-                        color: budget ? lime : ink.withValues(alpha: 0.7),
+                        color: budget ? tones.accent : ink.withValues(alpha: 0.7),
                       ),
                     ],
                   ),

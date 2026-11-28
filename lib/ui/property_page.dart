@@ -23,6 +23,7 @@ import 'invest_page.dart';
 import 'price_check_card.dart';
 import 'research_page.dart';
 import 'viewing_plan_page.dart';
+import 'molten.dart';
 
 const channelLabels = {
   'call': 'Call',
@@ -54,8 +55,8 @@ class PropertyPage extends ConsumerWidget {
       return Scaffold(
         appBar: AppBar(),
         body: all.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : const EmptyState(icon: Icons.home_outlined, title: 'This property was removed'),
+            ? const Center(child: LoadingMark())
+            : const EmptyNote(icon: Icons.home_outlined, title: 'This property was removed'),
       );
     }
     final kind = PropertyKind.of(p.kind);
@@ -119,7 +120,15 @@ class PropertyPage extends ConsumerWidget {
         children: [
           if (photos.isNotEmpty) PhotoGallery(photos),
           const SizedBox(height: 16),
-          Eyebrow('${kind.label} · ${Stage.of(p.stage).label(kind)}'),
+          if (Molten.on(context))
+            // Where the home sits: its list, its kind, its stage.
+            Breadcrumbs([
+              kind == PropertyKind.owned ? 'Lettings' : 'Shortlist',
+              kind.label,
+              Stage.of(p.stage).label(kind),
+            ])
+          else
+            Eyebrow('${kind.label} · ${Stage.of(p.stage).label(kind)}'),
           const SizedBox(height: 4),
           CopyLine(p.address, what: 'address', style: t.headlineSmall),
           const SizedBox(height: 12),
@@ -173,18 +182,30 @@ class PropertyPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final s in Stage.values)
-                      ChoiceChip(
-                        label: Text(s.label(kind)),
-                        selected: Stage.of(p.stage) == s,
-                        onSelected: (_) => ref.mutate((x) => x.book.setStage(p.id, s)),
-                      ),
-                  ],
-                ),
+                if (Molten.on(context)) ...[
+                  _StageBeads(p, kind),
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ChoiceChip(
+                      label: Text(Stage.dropped.label(kind)),
+                      selected: Stage.of(p.stage) == Stage.dropped,
+                      onSelected: (_) => ref.mutate((x) => x.book.setStage(p.id, Stage.dropped)),
+                    ),
+                  ),
+                ] else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final s in Stage.values)
+                        ChoiceChip(
+                          label: Text(s.label(kind)),
+                          selected: Stage.of(p.stage) == s,
+                          onSelected: (_) => ref.mutate((x) => x.book.setStage(p.id, s)),
+                        ),
+                    ],
+                  ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -192,7 +213,10 @@ class PropertyPage extends ConsumerWidget {
                     for (var i = 1; i <= 5; i++)
                       IconButton(
                         tooltip: '$i of 5',
-                        icon: Icon(i <= p.rating ? Icons.star : Icons.star_border, color: lime),
+                        icon: Icon(
+                          i <= p.rating ? Icons.star : Icons.star_border,
+                          color: Tones.of(context).accent,
+                        ),
                         onPressed: () => ref.mutate(
                           (x) => x.book.editProperty(p.id, (q) => q.copyWith(rating: i == p.rating ? 0 : i)),
                         ),
@@ -433,7 +457,7 @@ class PropertyPage extends ConsumerWidget {
             for (var i = 1; i <= 5; i++)
               IconButton(
                 tooltip: '$i of 5',
-                icon: Icon(i <= rating ? Icons.star : Icons.star_border, color: lime),
+                icon: Icon(i <= rating ? Icons.star : Icons.star_border, color: Tones.of(context).accent),
                 onPressed: () => setState(() => rating = i == rating ? 0 : i),
               ),
           ],
@@ -482,6 +506,27 @@ class PropertyPage extends ConsumerWidget {
 String contactName(Contact c) =>
     c.organisation.isNotEmpty && c.organisation != c.name ? '${c.name}, ${c.organisation}' : c.name;
 
+/// Molten's form of the stage chips: the active stages as beads on a
+/// chain, the home's own glowing, a note on what comes next. Tapping a bead
+/// moves the home there.
+class _StageBeads extends ConsumerWidget {
+  const _StageBeads(this.p, this.kind);
+  final Property p;
+  final PropertyKind kind;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final steps = Stage.values.where((s) => s.active).toList();
+    final at = steps.indexOf(Stage.of(p.stage));
+    return StepBeads(
+      steps: [for (final s in steps) s.label(kind)],
+      at: at,
+      note: at < 0 ? null : (at == steps.length - 1 ? 'All done' : 'Next: ${steps[at + 1].label(kind)}'),
+      onTap: (i) => ref.mutate((x) => x.book.setStage(p.id, steps[i])),
+    );
+  }
+}
+
 class _ContactCard extends ConsumerWidget {
   const _ContactCard(this.p, this.contact);
   final Property p;
@@ -503,7 +548,16 @@ class _ContactCard extends ConsumerWidget {
           if (c == null)
             const Text('No contact yet.')
           else ...[
-            CopyLine(contactName(c), what: 'name'),
+            if (Molten.on(context))
+              Row(
+                children: [
+                  SwirlAvatar(contactName(c)),
+                  const SizedBox(width: 12),
+                  Expanded(child: CopyLine(contactName(c), what: 'name')),
+                ],
+              )
+            else
+              CopyLine(contactName(c), what: 'name'),
             if (c.phone.isNotEmpty) CopyLine(c.phone, what: 'phone number', style: tabular),
             if (c.email.isNotEmpty) CopyLine(c.email, what: 'e-mail address'),
             const SizedBox(height: 8),

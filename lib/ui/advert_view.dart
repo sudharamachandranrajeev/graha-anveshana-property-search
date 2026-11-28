@@ -5,6 +5,7 @@ import '../domain/advert.dart';
 import '../domain/leasehold.dart';
 import 'common.dart';
 import 'look.dart';
+import 'molten.dart';
 
 /// What an advert page says, shown the same way for a home in Search and a
 /// saved one: key features, details, leasehold costs, description and
@@ -82,7 +83,9 @@ class _PhotoGalleryState extends State<PhotoGallery> {
   Widget build(BuildContext context) {
     final n = widget.photos.length;
     final scheme = Theme.of(context).colorScheme;
-    return ClipRRect(
+    // Molten pages through photos with stone pebbles under the picture.
+    final pebbles = n > 1 && Molten.on(context);
+    final gallery = ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: AspectRatio(
         aspectRatio: 16 / 10,
@@ -100,7 +103,7 @@ class _PhotoGalleryState extends State<PhotoGallery> {
                 errorBuilder: (_, _, _) => ColoredBox(color: scheme.surfaceContainerHighest),
               ),
             ),
-            if (n > 1) ...[
+            if (n > 1 && !pebbles) ...[
               Align(
                 alignment: Alignment.centerLeft,
                 child: IconButton.filledTonal(
@@ -125,6 +128,15 @@ class _PhotoGalleryState extends State<PhotoGallery> {
           ],
         ),
       ),
+    );
+    if (!pebbles) return gallery;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        gallery,
+        const SizedBox(height: 12),
+        Pager(count: n, at: _at, onChanged: _go),
+      ],
     );
   }
 }

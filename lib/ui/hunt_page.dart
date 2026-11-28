@@ -20,6 +20,7 @@ import 'homes_map.dart';
 import 'look.dart';
 import 'property_page.dart';
 import 'viewing_plan_page.dart';
+import 'molten.dart';
 
 class HuntPage extends ConsumerStatefulWidget {
   const HuntPage({super.key});
@@ -220,7 +221,7 @@ class _HuntPageState extends ConsumerState<HuntPage> {
     final mine = all.where((p) => p.kind == kind.name).toList();
     if (mine.isEmpty) {
       return [
-        EmptyState(
+        EmptyNote(
           icon: Icons.travel_explore,
           title: kind == PropertyKind.rent ? 'No homes to rent yet' : 'No homes to buy yet',
           message:
@@ -707,7 +708,7 @@ class _StageHeading extends StatelessWidget {
 }
 
 /// A property as a row of the hunt: photo, address and facts, with the rent
-/// or price large on the right. [best] underlines the top-rated in lime;
+/// or price large on the right. [best] underlines the top-rated in the accent;
 /// [share] draws its price against the dearest in the list.
 class PropertyCard extends StatelessWidget {
   const PropertyCard(
@@ -738,7 +739,6 @@ class PropertyCard extends StatelessWidget {
     final t = Theme.of(context).textTheme;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     final gone = listingGone(p.listingStatus);
-    final dark = Theme.of(context).brightness == Brightness.dark;
     final market = MarketFacts.of(p.meta);
     final change = market.changeText;
     // Still advertised as far as the app knows, but no search has shown it.
@@ -747,12 +747,7 @@ class PropertyCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Card(
         clipBehavior: Clip.antiAlias,
-        shape: best
-            ? RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-                side: BorderSide(color: dark ? lime.withValues(alpha: 0.35) : Tones.of(context).hairline),
-              )
-            : null,
+        shape: best ? bestShape(context) : null,
         child: InkWell(
           onTap: picked != null
               ? onPick
@@ -806,6 +801,7 @@ class PropertyCard extends StatelessWidget {
                           Wrap(
                             spacing: 12,
                             children: [
+                              if (Molten.on(context) && Stage.of(p.stage) == Stage.fresh) const NewBadge(),
                               if (distance != null)
                                 Hint(
                                   'hunt.distance',
@@ -829,7 +825,10 @@ class PropertyCard extends StatelessWidget {
                                   ),
                                 ),
                               if (p.rating > 0)
-                                Text('★' * p.rating, style: t.bodySmall?.copyWith(color: lime)),
+                                Text(
+                                  '★' * p.rating,
+                                  style: t.bodySmall?.copyWith(color: Tones.of(context).accent),
+                                ),
                             ],
                           ),
                         ],
@@ -853,7 +852,10 @@ class PropertyCard extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                   child: Container(
                     height: 3,
-                    decoration: BoxDecoration(color: lime, borderRadius: BorderRadius.circular(2)),
+                    decoration: BoxDecoration(
+                      color: Tones.of(context).accent,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
             ],
@@ -880,7 +882,9 @@ class _PriceTrack extends StatelessWidget {
           FractionallySizedBox(
             widthFactor: share.clamp(0, 1).toDouble(),
             child: ColoredBox(
-              color: best ? lime : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
+              color: best
+                  ? Tones.of(context).accent
+                  : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
             ),
           ),
         ],

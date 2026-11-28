@@ -16,6 +16,7 @@ import 'common.dart';
 import 'look.dart';
 import 'safety_card.dart';
 import 'invest_page.dart';
+import 'molten.dart';
 
 /// What to check before buying land or a building to develop, by topic.
 const _devChecklist = <({String title, String body})>[
@@ -130,7 +131,7 @@ class _ResearchPageState extends ConsumerState<ResearchPage> {
                   FilledButton(onPressed: busy ? null : _lookUp, child: const Text('Look up')),
                 ],
               ),
-              if (busy) const Padding(padding: EdgeInsets.only(top: 12), child: LinearProgressIndicator()),
+              if (busy) const Padding(padding: EdgeInsets.only(top: 12), child: LoadingBar()),
               if (error != null)
                 Padding(padding: const EdgeInsets.only(top: 12), child: StatusLabel(Status.critical, error!)),
             ],
