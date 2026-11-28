@@ -40,6 +40,9 @@ void main() {
     // A few list-tile trailing texts ask for the platform's Roboto, which the
     // test engine lacks (it draws boxes); stand Inter in for it.
     await family('Roboto', inter);
+    await family('PlusJakartaSans', [
+      for (final w in ['Medium', 'SemiBold', 'Bold', 'ExtraBold']) 'assets/fonts/PlusJakartaSans-$w.ttf',
+    ]);
     final flutterRoot = Platform.environment['FLUTTER_ROOT'] ?? '';
     final icons = File('$flutterRoot/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf');
     if (icons.existsSync()) await family('MaterialIcons', [icons.path]);
@@ -176,6 +179,38 @@ void main() {
       await shot('molten-home-stage');
       await app.tap(find.byTooltip('Remove'));
       await shot('molten-dialog');
+      await app.close();
+    }
+
+    // The Udyoga look, light and dark: the main screens and a home.
+    for (final dark in [false, true]) {
+      tester.platformDispatcher.platformBrightnessTestValue = dark ? Brightness.dark : Brightness.light;
+      final app = AppHarness(tester);
+      tester.view.physicalSize = const Size(1170, 2532);
+      tester.view.devicePixelRatio = 3;
+      await app.open(
+        seed: (book) async {
+          await seed(book);
+          await book.setPref(PrefKeys.look, 'udyoga');
+        },
+      );
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: key,
+          child: ProviderScope(
+            overrides: [...anveshanaOverrides(app.session), inlineMapsProvider.overrideWithValue(false)],
+            retry: (_, _) => null,
+            child: const AnveshanaApp(),
+          ),
+        ),
+      );
+      await app.settle();
+      final mode = dark ? 'dark' : 'light';
+      await shot('udyoga-dashboard-$mode');
+      await app.dock('Shortlist');
+      await shot('udyoga-hunt-$mode');
+      await app.tapText('27 Fictional Gardens');
+      await shot('udyoga-home-$mode');
       await app.close();
     }
 

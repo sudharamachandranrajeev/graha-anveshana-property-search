@@ -21,6 +21,7 @@ import 'look.dart';
 import 'property_page.dart';
 import 'viewing_plan_page.dart';
 import 'molten.dart';
+import 'udyoga_look.dart';
 
 class HuntPage extends ConsumerStatefulWidget {
   const HuntPage({super.key});
@@ -743,122 +744,131 @@ class PropertyCard extends StatelessWidget {
     final change = market.changeText;
     // Still advertised as far as the app knows, but no search has shown it.
     final stale = !gone && Stage.of(p.stage).active && market.mayBeGone(today());
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        shape: best ? bestShape(context) : null,
-        child: InkWell(
-          onTap: picked != null
-              ? onPick
-              : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PropertyPage(p.id))),
-          onLongPress: onPick,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (picked != null)
-                      Checkbox(
-                        value: picked,
-                        onChanged: (_) => onPick?.call(),
-                        semanticLabel: 'Pick ${p.address}',
-                      ),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: SizedBox(
-                        width: 96,
-                        height: 72,
-                        child: p.imageUrl == null
-                            ? ColoredBox(
-                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                child: const Icon(Icons.home_outlined),
-                              )
-                            : Image.network(
-                                p.imageUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => const Icon(Icons.home_outlined),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(p.address, style: t.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
-                          const SizedBox(height: 4),
-                          if (propertyFacts(p).isNotEmpty) Text(propertyFacts(p), style: t.bodySmall),
-                          if (share != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 6, right: 24),
-                              child: _PriceTrack(share!, best: best),
-                            ),
-                          const SizedBox(height: 4),
-                          Wrap(
-                            spacing: 12,
-                            children: [
-                              if (Molten.on(context) && Stage.of(p.stage) == Stage.fresh) const NewBadge(),
-                              if (distance != null)
-                                Hint(
-                                  'hunt.distance',
-                                  child: Text(km(distance!), style: t.bodySmall?.copyWith(color: muted)),
-                                ),
-                              if (gone)
-                                Hint(
-                                  'hunt.gone',
-                                  child: StatusLabel(Status.warning, listingStatusLabel(p.listingStatus)),
-                                ),
-                              if (quietDays != null && quietDays! >= chaseAfterDays)
-                                StatusLabel(Status.info, 'No reply for $quietDays days: chase'),
-                              if (change != null)
-                                StatusLabel(market.change! < 0 ? Status.good : Status.warning, change),
-                              if (stale)
-                                Hint(
-                                  'hunt.stale',
-                                  child: StatusLabel(
-                                    Status.warning,
-                                    'May be gone: not seen since ${niceDate(market.seen!)}',
-                                  ),
-                                ),
-                              if (p.rating > 0)
-                                Text(
-                                  '★' * p.rating,
-                                  style: t.bodySmall?.copyWith(color: Tones.of(context).accent),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      priceLabel(p),
-                      textAlign: TextAlign.end,
-                      style:
-                          (p.price == null
-                                  ? t.bodySmall
-                                  : t.titleMedium?.copyWith(fontWeight: FontWeight.w800))
-                              ?.merge(tabular),
-                    ),
-                  ],
-                ),
-              ),
-              if (best)
+    // Udyoga's cards lean towards the pointer.
+    return tiltOn(
+      context,
+      Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Card(
+          clipBehavior: Clip.antiAlias,
+          shape: best ? bestShape(context) : null,
+          child: InkWell(
+            onTap: picked != null
+                ? onPick
+                : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PropertyPage(p.id))),
+            onLongPress: onPick,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                  child: Container(
-                    height: 3,
-                    decoration: BoxDecoration(
-                      color: Tones.of(context).accent,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (picked != null)
+                        Checkbox(
+                          value: picked,
+                          onChanged: (_) => onPick?.call(),
+                          semanticLabel: 'Pick ${p.address}',
+                        ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: SizedBox(
+                          width: 96,
+                          height: 72,
+                          child: p.imageUrl == null
+                              ? ColoredBox(
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                  child: const Icon(Icons.home_outlined),
+                                )
+                              : Image.network(
+                                  p.imageUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => const Icon(Icons.home_outlined),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              p.address,
+                              style: t.titleSmall,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            if (propertyFacts(p).isNotEmpty) Text(propertyFacts(p), style: t.bodySmall),
+                            if (share != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6, right: 24),
+                                child: _PriceTrack(share!, best: best),
+                              ),
+                            const SizedBox(height: 4),
+                            Wrap(
+                              spacing: 12,
+                              children: [
+                                if (Molten.on(context) && Stage.of(p.stage) == Stage.fresh) const NewBadge(),
+                                if (distance != null)
+                                  Hint(
+                                    'hunt.distance',
+                                    child: Text(km(distance!), style: t.bodySmall?.copyWith(color: muted)),
+                                  ),
+                                if (gone)
+                                  Hint(
+                                    'hunt.gone',
+                                    child: StatusLabel(Status.warning, listingStatusLabel(p.listingStatus)),
+                                  ),
+                                if (quietDays != null && quietDays! >= chaseAfterDays)
+                                  StatusLabel(Status.info, 'No reply for $quietDays days: chase'),
+                                if (change != null)
+                                  StatusLabel(market.change! < 0 ? Status.good : Status.warning, change),
+                                if (stale)
+                                  Hint(
+                                    'hunt.stale',
+                                    child: StatusLabel(
+                                      Status.warning,
+                                      'May be gone: not seen since ${niceDate(market.seen!)}',
+                                    ),
+                                  ),
+                                if (p.rating > 0)
+                                  Text(
+                                    '★' * p.rating,
+                                    style: t.bodySmall?.copyWith(color: Tones.of(context).accent),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        priceLabel(p),
+                        textAlign: TextAlign.end,
+                        style:
+                            (p.price == null
+                                    ? t.bodySmall
+                                    : t.titleMedium?.copyWith(fontWeight: FontWeight.w800))
+                                ?.merge(tabular),
+                      ),
+                    ],
                   ),
                 ),
-            ],
+                if (best)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                    child: Container(
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: Tones.of(context).accent,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

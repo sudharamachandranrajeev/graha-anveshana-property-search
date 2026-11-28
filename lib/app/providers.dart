@@ -76,7 +76,11 @@ final huntGoalsProvider = FutureProvider<Map<String, Object?>>((ref) {
 /// How the app looks, chosen in Settings. It syncs like the other settings.
 enum Look {
   instrument('Instrument', 'Charcoal and lime, fine lines: the usual look.'),
-  molten('Molten', 'Grey stone with glowing rose-gold rims, cracks and molten drips.');
+  molten('Molten', 'Grey stone with glowing rose-gold rims, cracks and molten drips.'),
+  udyoga(
+    'Udyoga',
+    "Soft azure sky, white cards that tilt towards the pointer, an ink bar: the Udyoga app's look.",
+  );
 
   const Look(this.label, this.about);
   final String label, about;
