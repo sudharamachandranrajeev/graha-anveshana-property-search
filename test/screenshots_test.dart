@@ -143,6 +143,42 @@ void main() {
         ..writeAsBytesSync(bytes!.buffer.asUint8List());
     }
 
+    // The Molten look on the main screens, a home, Settings and a dialog.
+    {
+      final app = AppHarness(tester);
+      tester.view.physicalSize = const Size(1170, 2532);
+      tester.view.devicePixelRatio = 3;
+      await app.open(
+        seed: (book) async {
+          await seed(book);
+          await book.setPref(PrefKeys.look, 'molten');
+        },
+      );
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: key,
+          child: ProviderScope(
+            overrides: [...anveshanaOverrides(app.session), inlineMapsProvider.overrideWithValue(false)],
+            retry: (_, _) => null,
+            child: const AnveshanaApp(),
+          ),
+        ),
+      );
+      await app.settle();
+      await shot('molten-dashboard');
+      await app.dock('Shortlist');
+      await shot('molten-hunt');
+      await app.tapText('27 Fictional Gardens');
+      await shot('molten-home');
+      await app.reveal(find.text('Rating'));
+      await tester.ensureVisible(find.text('Rating'));
+      await app.settle();
+      await shot('molten-home-stage');
+      await app.tap(find.byTooltip('Remove'));
+      await shot('molten-dialog');
+      await app.close();
+    }
+
     for (final dark in [true, false]) {
       tester.platformDispatcher.platformBrightnessTestValue = dark ? Brightness.dark : Brightness.light;
       final app = AppHarness(tester);

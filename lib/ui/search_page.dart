@@ -27,6 +27,7 @@ import 'common.dart';
 import 'homes_map.dart';
 import 'result_filters.dart';
 import 'searches_page.dart';
+import 'molten.dart';
 
 /// Recent searches shown on the start screen.
 const _recentShown = 8;
@@ -1109,7 +1110,12 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   }
 
   Widget _tail(SearchState s) {
-    if (s.busy) return const Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator());
+    if (s.busy) {
+      // Molten stands grey rows in for the results still coming.
+      return Molten.on(context)
+          ? const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: SkeletonRows())
+          : const Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator());
+    }
     if (s.more) {
       return OutlinedButton(
         onPressed: () => ref.read(searchProvider.notifier).more(),
@@ -1117,7 +1123,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
       );
     }
     if (s.homes.isEmpty && s.request?.isEmpty == false) {
-      return const EmptyState(
+      return const EmptyNote(
         icon: Icons.search_off,
         title: 'Nothing answers that yet',
         message: 'Try a bigger distance, a higher price or fewer must-haves. Tap a filter to change it.',

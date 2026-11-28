@@ -50,6 +50,7 @@ class SettingsPage extends ConsumerWidget {
             '2. Copy the key shown on the "My account" page and paste it here.',
           ),
         ),
+        const _LookCard(),
         const AppLockCard(),
         const HintsCard(),
         const SyncCard(),
@@ -120,6 +121,36 @@ class SettingsPage extends ConsumerWidget {
         });
         return null;
       },
+    );
+  }
+}
+
+/// Settings > Look: the usual instrument panel or Molten stone.
+class _LookCard extends ConsumerWidget {
+  const _LookCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final look = ref.watch(lookProvider).value ?? Look.instrument;
+    return SectionCard(
+      title: 'Look',
+      child: RadioGroup<Look>(
+        groupValue: look,
+        onChanged: (l) {
+          if (l != null && l != look) ref.mutate((s) => s.book.setPref(PrefKeys.look, l.name));
+        },
+        child: Column(
+          children: [
+            for (final l in Look.values)
+              RadioListTile<Look>(
+                value: l,
+                contentPadding: EdgeInsets.zero,
+                title: Text(l.label),
+                subtitle: Text(l.about),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

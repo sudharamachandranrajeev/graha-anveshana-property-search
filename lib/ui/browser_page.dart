@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import '../domain/page_reader.dart';
 import '../domain/sources.dart';
 import 'common.dart';
+import 'molten.dart';
 
 /// Whether this build has an embedded web view. Linux has one (WPE WebKit)
 /// when built with it; the portable release tarball is built without it
@@ -302,10 +303,23 @@ class _BrowserPageState extends State<BrowserPage> {
           ),
         ],
         bottom: _progress < 1
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(3),
-                child: LinearProgressIndicator(value: _progress == 0 ? null : _progress, minHeight: 3),
-              )
+            ? (Molten.on(context)
+                  // The molten bar with its percentage, clear of the rope
+                  // drawn along the app bar's bottom edge.
+                  ? PreferredSize(
+                      preferredSize: const Size.fromHeight(34),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: MoltenProgress(
+                          value: _progress == 0 ? null : _progress,
+                          label: _progress == 0 ? 'Loading…' : 'Loading: ${(_progress * 100).round()}%',
+                        ),
+                      ),
+                    )
+                  : PreferredSize(
+                      preferredSize: const Size.fromHeight(3),
+                      child: LinearProgressIndicator(value: _progress == 0 ? null : _progress, minHeight: 3),
+                    ))
             : null,
       ),
       body: InAppWebView(

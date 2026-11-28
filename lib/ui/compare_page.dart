@@ -11,6 +11,7 @@ import '../domain/running_costs.dart';
 import 'common.dart';
 import 'look.dart';
 import 'property_page.dart';
+import 'molten.dart';
 
 /// Homes side by side: those picked on the Shortlist, else every home in
 /// play from Liked on, with New ones too when asked. Homes are columns so
@@ -89,7 +90,7 @@ class _ComparePageState extends ConsumerState<ComparePage> {
             ),
           ),
         if (rows.length < 2)
-          EmptyState(
+          EmptyNote(
             icon: Icons.compare_arrows,
             title: 'Shortlist two or more',
             message: ids != null

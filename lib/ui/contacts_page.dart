@@ -8,6 +8,7 @@ import '../db/database.dart';
 import '../domain/contact_links.dart';
 import 'common.dart';
 import 'property_page.dart';
+import 'molten.dart';
 
 const contactRoles = {
   'agent': 'Letting or estate agent',
@@ -36,7 +37,7 @@ class ContactsPage extends ConsumerWidget {
       AsyncView(
         ref.watch(contactsProvider),
         builder: (contacts) => contacts.isEmpty
-            ? const EmptyState(
+            ? const EmptyNote(
                 icon: Icons.contacts_outlined,
                 title: 'No contacts yet',
                 message:

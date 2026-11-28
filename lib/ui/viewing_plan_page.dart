@@ -10,6 +10,7 @@ import '../db/database.dart';
 import '../domain/viewing_plan.dart';
 import 'common.dart';
 import 'property_page.dart';
+import 'molten.dart';
 
 /// Booked viewings from today, day by day in time order, with a warning
 /// where two are too close to get between.
@@ -34,7 +35,7 @@ class ViewingPlanPage extends ConsumerWidget {
       ],
       children: [
         if (days.isEmpty)
-          const EmptyState(
+          const EmptyNote(
             icon: Icons.event_available_outlined,
             title: 'No viewings booked',
             message: 'Book a viewing on a home\'s page. Booked viewings show here day by day.',

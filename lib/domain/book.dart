@@ -37,6 +37,9 @@ abstract final class PrefKeys {
 
   /// The user's own key for the EPC register (see home_records.dart).
   static const epcKey = 'anveshana.epc.key';
+
+  /// The app's look: "instrument" (the default) or "molten" (see Look).
+  static const look = 'anveshana.look';
 }
 
 /// Where distances are measured from (the user's home or work).

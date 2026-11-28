@@ -13,6 +13,7 @@ import 'browser_page.dart';
 import 'common.dart';
 import 'listing_map.dart';
 import 'search_page.dart';
+import 'molten.dart';
 
 /// A home from the search, shown in full inside the app: every photo, the
 /// description, facts, floor plans and agent, read from the site's advert.
@@ -167,7 +168,7 @@ class _AdvertPageState extends ConsumerState<AdvertPage> {
                       const SizedBox(height: 16),
                       if (snap.connectionState != ConnectionState.done)
                         const Center(
-                          child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()),
+                          child: Padding(padding: EdgeInsets.all(24), child: LoadingMark()),
                         )
                       else if (snap.hasError || d == null || d.isEmpty)
                         _NotRead(

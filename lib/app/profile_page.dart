@@ -13,6 +13,7 @@ import '../ui/listing_map.dart';
 import '../ui/search_page.dart';
 import 'providers.dart';
 import 'search_memory.dart';
+import '../ui/molten.dart';
 
 /// The user: their details for enquiries, their home point and places
 /// (every home shows how far it is from each), their sign-ins to the sites
@@ -226,7 +227,7 @@ class TrashPage extends ConsumerWidget {
       ],
       children: [
         if (trash.isEmpty)
-          const EmptyState(
+          const EmptyNote(
             icon: Icons.delete_outline,
             title: 'The Trash is empty',
             message: 'Throw a home out of Search (the bin on its card) and it never shows again.',

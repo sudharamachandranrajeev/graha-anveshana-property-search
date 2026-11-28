@@ -105,6 +105,10 @@ not advice.
   works in every Brahma app.
 - 🎨 **Easy to read** – big clear figures, light and dark themes, and a hint beside every
   control.
+- 🌋 **Two looks** – the usual clean **Instrument** look, or **Molten**: grey stone with glowing
+  rose-gold edges, cracks and molten drips. A home's stage shows as beads on a chain, photos turn
+  with PREV and NEXT pebbles, and an empty page shows an astronaut on the moon. Pick one in
+  **Settings → Look**.
 
 <details>
 <summary>Full list of what the sums and reports cover</summary>
@@ -310,6 +314,13 @@ area reports and alerts need the internet.
 </details>
 
 <details>
+<summary><b>How do I change the look?</b></summary>
+
+Open **Settings**, find **Look** and tap **Molten** or **Instrument**. The app changes at once.
+The choice syncs to your other devices if you use sync. Molten is always dark.
+</details>
+
+<details>
 <summary><b>How does it read screenshots and photos?</b></summary>
 
 With text recognition (OCR) on your own device: Tesseract on Linux and Windows, Google's on-device
@@ -443,6 +454,7 @@ flutter run -d linux        # or windows, or an Android device
 
 flutter analyze && flutter test                                       # check and test
 GRAHA_SHOTS=/tmp/shots flutter test test/screenshots_test.dart        # render the screenshots
+GRAHA_SHOTS=/tmp/shots flutter test test/molten_kit_test.dart         # every Molten piece on one page
 scripts/make-icons.sh                                                 # app icons from branding/anveshana.svg
 ```
 

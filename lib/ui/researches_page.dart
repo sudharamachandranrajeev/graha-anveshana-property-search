@@ -19,6 +19,7 @@ import 'browser_page.dart';
 import 'common.dart';
 import 'look.dart';
 import 'property_page.dart';
+import 'molten.dart';
 
 const researchKinds = {'rent': 'Renting', 'buy': 'Buying', 'invest': 'Investing', 'area': 'Area study'};
 
@@ -92,7 +93,7 @@ class ResearchesPage extends ConsumerWidget {
           ref.watch(researchesProvider),
           builder: (researches) {
             if (researches.isEmpty) {
-              return const EmptyState(
+              return const EmptyNote(
                 icon: Icons.collections_bookmark_outlined,
                 title: 'No researches yet',
                 message:
@@ -320,7 +321,7 @@ class ResearchDetailPage extends ConsumerWidget {
           ),
         RowsHeading('Catalog', trailing: Text('${items.length}')),
         if (items.isEmpty)
-          const EmptyState(
+          const EmptyNote(
             icon: Icons.add_photo_alternate_outlined,
             title: 'Nothing captured yet',
             message:
@@ -706,7 +707,7 @@ Future<void> showBusy(BuildContext context, String what, Future<void> Function()
     builder: (_) => AlertDialog(
       content: Row(
         children: [
-          const CircularProgressIndicator(),
+          const LoadingMark(),
           const SizedBox(width: 16),
           Expanded(child: Text(what)),
         ],
@@ -812,7 +813,7 @@ class _DuplicatesPage extends ConsumerWidget {
       title: 'Possible duplicates',
       children: [
         if (pairs.isEmpty)
-          const EmptyState(
+          const EmptyNote(
             icon: Icons.check_circle_outline,
             title: 'No duplicates found',
             message: 'Nothing here looks like the same home twice.',

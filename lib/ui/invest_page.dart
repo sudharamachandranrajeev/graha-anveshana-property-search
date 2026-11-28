@@ -11,6 +11,7 @@ import '../domain/appraisal.dart';
 import '../domain/tax.dart';
 import 'common.dart';
 import 'look.dart';
+import 'molten.dart';
 
 const _kinds = {'btl': 'Buy-to-let', 'home': 'Buy a home', 'dev': 'Development'};
 
@@ -481,7 +482,7 @@ class _InvestPageState extends ConsumerState<InvestPage> {
   Widget _savedList() => AsyncView(
     ref.watch(appraisalsProvider),
     builder: (list) => list.isEmpty
-        ? const EmptyState(
+        ? const EmptyNote(
             icon: Icons.bookmarks_outlined,
             title: 'Nothing saved',
             message: 'Save an appraisal to keep it here.',

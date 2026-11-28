@@ -73,6 +73,21 @@ final huntGoalsProvider = FutureProvider<Map<String, Object?>>((ref) {
   return ref.watch(sessionProvider).book.pref<Map<String, Object?>>(PrefKeys.huntGoals, const {});
 });
 
+/// How the app looks, chosen in Settings. It syncs like the other settings.
+enum Look {
+  instrument('Instrument', 'Charcoal and lime, fine lines: the usual look.'),
+  molten('Molten', 'Grey stone with glowing rose-gold rims, cracks and molten drips.');
+
+  const Look(this.label, this.about);
+  final String label, about;
+}
+
+final lookProvider = FutureProvider<Look>((ref) async {
+  ref.watch(revisionProvider);
+  final id = await ref.watch(sessionProvider).book.pref<String>(PrefKeys.look, Look.instrument.name);
+  return Look.values.asNameMap()[id] ?? Look.instrument;
+});
+
 final contactsProvider = _rows<$ContactsTable, Contact>(
   (db) => db.contacts,
   orderBy: [(c) => OrderingTerm(expression: c.name)],

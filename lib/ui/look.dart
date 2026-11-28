@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:brahma_core/brahma_core.dart';
 import 'package:flutter/material.dart';
 
+import 'molten.dart';
+
 // The Anveshana look, shared by Graha and Vahana Anveshana (keep the two
 // copies in step): an instrument panel. A charcoal canvas crossed by faint
 // contour lines; hairline cards; one lime accent that marks the best or the
@@ -13,8 +15,8 @@ const ink = Color(0xFF141517);
 
 /// Inter, bundled. Standalone the app names it plainly; inside the Brahma
 /// suite a package's fonts live under `packages/<name>/`, hence the fallback.
-const _font = 'Inter';
-const _fontInSuite = ['packages/anveshana/Inter'];
+const lookFont = 'Inter';
+const lookFontFallback = ['packages/anveshana/Inter'];
 
 /// The colours the widgets below draw with, beyond the colour scheme.
 class Tones {
@@ -25,6 +27,7 @@ class Tones {
     required this.hairline,
     required this.muted,
     required this.track,
+    this.accent = lime,
   });
 
   static const _dark = Tones._(
@@ -44,13 +47,27 @@ class Tones {
     track: Color(0xFFD9D9D2),
   );
 
-  static Tones of(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? _dark : _light;
+  static const _molten = Tones._(
+    top: Forge.steelTop,
+    bottom: Forge.steelBottom,
+    line: Color(0x0FFFFFFF),
+    hairline: Color(0x55E29D7E),
+    muted: Forge.muted,
+    track: Forge.stoneDeep,
+    accent: Forge.roseBright,
+  );
+
+  static Tones of(BuildContext context) =>
+      Molten.on(context) ? _molten : (Theme.of(context).brightness == Brightness.dark ? _dark : _light);
 
   /// The canvas, top to bottom, and the contour lines drawn on it.
   final Color top, bottom, line;
 
   /// Card edges, secondary text and empty bar tracks.
   final Color hairline, muted, track;
+
+  /// What marks the best or the chosen: lime, or rose gold under Molten.
+  final Color accent;
 }
 
 ThemeData instrumentTheme(Brightness b) {
@@ -83,8 +100,8 @@ ThemeData instrumentTheme(Brightness b) {
     outlineVariant: tones.hairline,
   );
   final type = base.textTheme.apply(
-    fontFamily: _font,
-    fontFamilyFallback: _fontInSuite,
+    fontFamily: lookFont,
+    fontFamilyFallback: lookFontFallback,
     bodyColor: text,
     displayColor: text,
   );
@@ -112,7 +129,7 @@ ThemeData instrumentTheme(Brightness b) {
   return base.copyWith(
     colorScheme: scheme,
     textTheme: t,
-    primaryTextTheme: base.primaryTextTheme.apply(fontFamily: _font, fontFamilyFallback: _fontInSuite),
+    primaryTextTheme: base.primaryTextTheme.apply(fontFamily: lookFont, fontFamilyFallback: lookFontFallback),
     // The canvas (see Backdrop) shows through every page.
     scaffoldBackgroundColor: Colors.transparent,
     canvasColor: scheme.surface,
@@ -264,11 +281,14 @@ ThemeData instrumentTheme(Brightness b) {
       iconColor: tones.muted,
       collapsedIconColor: tones.muted,
     ),
-    pageTransitionsTheme: PageTransitionsTheme(
-      builders: {for (final p in TargetPlatform.values) p: const _OnCanvas()},
-    ),
+    pageTransitionsTheme: onCanvasTransitions,
   );
 }
+
+/// Every platform's page transition, each page on its own canvas.
+final onCanvasTransitions = PageTransitionsTheme(
+  builders: {for (final p in TargetPlatform.values) p: const _OnCanvas()},
+);
 
 /// Pushed pages fade forwards like everywhere else in Brahma, each on its own
 /// canvas so the page beneath never shows through the transparent scaffold.
@@ -296,6 +316,9 @@ class Backdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (Molten.on(context)) {
+      return CustomPaint(painter: const MoltenCanvasPainter(), child: child);
+    }
     final tones = Tones.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -394,9 +417,19 @@ class FigureCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final molten = Molten.on(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
+        // Molten's raised slab: a glowing rose-gold rim, 2 px.
+        shape: molten
+            ? const StoneBorder(
+                kind: Stone.raised,
+                glow: 0.5,
+                seed: 4,
+                side: BorderSide(color: Forge.rose, width: 2),
+              )
+            : null,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
           child: Column(
@@ -415,7 +448,9 @@ class FigureCard extends StatelessWidget {
                         style: t.displayMedium
                             ?.merge(tabular)
                             .copyWith(
-                              color: accent ? (dark ? lime : const Color(0xFF4F6300)) : null,
+                              color: accent
+                                  ? (molten ? Forge.roseBright : (dark ? lime : const Color(0xFF4F6300)))
+                                  : null,
                               height: 1.05,
                             ),
                       ),
@@ -478,7 +513,6 @@ class ScoreRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).textTheme;
     final tones = Tones.of(context);
-    final dark = Theme.of(context).brightness == Brightness.dark;
     final row = Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Row(
@@ -511,12 +545,7 @@ class ScoreRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Card(
         clipBehavior: Clip.antiAlias,
-        shape: best
-            ? RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-                side: BorderSide(color: dark ? lime.withValues(alpha: 0.35) : tones.hairline),
-              )
-            : null,
+        shape: best ? bestShape(context) : null,
         child: InkWell(
           onTap: onTap ?? (explain == null ? null : () => explainFigure(context, lead, explain!)),
           child: Column(
@@ -529,7 +558,7 @@ class ScoreRow extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                   child: Container(
                     height: 3,
-                    decoration: BoxDecoration(color: lime, borderRadius: BorderRadius.circular(2)),
+                    decoration: BoxDecoration(color: tones.accent, borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
             ],
@@ -540,6 +569,24 @@ class ScoreRow extends StatelessWidget {
   }
 }
 
+/// The edge of the card holding the best of a list: lime-tinted, or
+/// Molten's raised slab with its glowing rim.
+ShapeBorder bestShape(BuildContext context) {
+  if (Molten.on(context)) {
+    return const StoneBorder(
+      kind: Stone.raised,
+      glow: 0.4,
+      seed: 9,
+      side: BorderSide(color: Forge.rose, width: 2),
+    );
+  }
+  final dark = Theme.of(context).brightness == Brightness.dark;
+  return RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(18),
+    side: BorderSide(color: dark ? lime.withValues(alpha: 0.35) : Tones.of(context).hairline),
+  );
+}
+
 class _Track extends StatelessWidget {
   const _Track(this.share, {required this.best});
   final double share;
@@ -548,7 +595,7 @@ class _Track extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tones = Tones.of(context);
-    final fill = best ? lime : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55);
+    final fill = best ? tones.accent : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55);
     return ClipRRect(
       borderRadius: BorderRadius.circular(3),
       child: SizedBox(

@@ -9,6 +9,7 @@ import '../domain/research.dart';
 import '../domain/watch_client.dart';
 import 'browser_page.dart';
 import 'common.dart';
+import 'molten.dart';
 
 WatchSearch _toWatch(Search s) => WatchSearch(
   id: s.id,
@@ -148,7 +149,7 @@ class SearchesPage extends ConsumerWidget {
         AsyncView(
           ref.watch(searchesProvider),
           builder: (searches) => searches.isEmpty
-              ? const EmptyState(
+              ? const EmptyNote(
                   icon: Icons.saved_search,
                   title: 'No saved searches',
                   message: 'Add one, or copy the searches Brahma Watch already runs.',
